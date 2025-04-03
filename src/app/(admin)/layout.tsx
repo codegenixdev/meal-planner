@@ -5,6 +5,10 @@ import { motion } from "framer-motion";
 import { Apple, ChevronDown, ChevronLeft, Home, Menu } from "lucide-react";
 import Link from "next/link";
 import { ReactNode, useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
+import { AlertDialogProvider } from "@/components/ui/alert-dialog-provider";
 
 type RouteGroup = {
   group: string;
@@ -36,6 +40,19 @@ const routeGroups: RouteGroup[] = [
     ],
   },
 ];
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    mutations: {
+      onError: (e) => {
+        toast.error(e.message);
+      },
+      onSuccess: () => {
+        toast.error("Operation was successful.");
+      },
+    },
+  },
+});
 
 type LayoutProps = { children: ReactNode };
 const Layout = ({ children }: LayoutProps) => {
@@ -81,7 +98,11 @@ const Layout = ({ children }: LayoutProps) => {
           open ? "ml-64" : "ml-0"
         }`}
       >
-        {children}
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+        <Toaster />
+        <AlertDialogProvider />
       </main>
     </div>
   );
