@@ -8,7 +8,8 @@ import { useQuery } from "@tanstack/react-query";
 const useFoods = () => {
   return useQuery({
     queryKey: ["foods"],
-    queryFn: getFoods,
+    now add filters in ui in store or somewhere else and pass them here
+    queryFn: () => getFoods(),
   });
 };
 
