@@ -1,14 +1,14 @@
 "use client";
+import { AlertDialogProvider } from "@/components/ui/alert-dialog-provider";
 import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Apple, ChevronDown, ChevronLeft, Home, Menu } from "lucide-react";
 import Link from "next/link";
 import { ReactNode, useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
-import { AlertDialogProvider } from "@/components/ui/alert-dialog-provider";
 
 type RouteGroup = {
   group: string;
@@ -33,7 +33,7 @@ const routeGroups: RouteGroup[] = [
     group: "Ingredients",
     items: [
       {
-        href: "/admin/foods",
+        href: "/admin/foods-management",
         label: "Foods",
         icon: <Apple />,
       },

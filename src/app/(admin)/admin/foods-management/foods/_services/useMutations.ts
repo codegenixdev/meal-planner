@@ -2,8 +2,8 @@ import {
   createFood,
   deleteFood,
   updateFood,
-} from "@/app/(admin)/admin/foods/_services/services";
-import { FoodSchema } from "@/app/(admin)/admin/foods/_types/schemas";
+} from "@/app/(admin)/admin/foods-management/foods/_services/services";
+import { FoodSchema } from "@/app/(admin)/admin/foods-management/foods/_types/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 

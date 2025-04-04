@@ -1,8 +1,8 @@
-import { useFoodsStore } from "@/app/(admin)/admin/foods/_libs/useFoodsStore";
+import { useFoodsStore } from "@/app/(admin)/admin/foods-management/foods/_libs/useFoodsStore";
 import {
   getFood,
   getFoods,
-} from "@/app/(admin)/admin/foods/_services/services";
+} from "@/app/(admin)/admin/foods-management/foods/_services/services";
 import { useQuery } from "@tanstack/react-query";
 
 const useFoods = () => {

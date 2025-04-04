@@ -1,16 +1,5 @@
 import { z } from "zod";
 
-const categorySchema = z.intersection(
-  z.object({
-    name: z.string().min(1).max(255),
-    foodIds: z.array(z.string()),
-  }),
-  z.discriminatedUnion("action", [
-    z.object({ action: z.literal("create") }),
-    z.object({ action: z.literal("update"), id: z.number().min(1) }),
-  ])
-);
-
 const foodSchema = z.intersection(
   z.object({
     name: z.string().min(1).max(255),
@@ -57,10 +46,4 @@ const servingUnitSchema = z.intersection(
   ])
 );
 
-export {
-  categorySchema,
-  foodSchema,
-  servingUnitSchema,
-  foodDefaultValues,
-  type FoodSchema,
-};
+export { foodSchema, servingUnitSchema, foodDefaultValues, type FoodSchema };

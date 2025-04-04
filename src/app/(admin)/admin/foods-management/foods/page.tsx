@@ -1,21 +1,21 @@
 "use client";
-import { useFoodsColumns } from "@/app/(admin)/admin/foods/_libs/useFoodsColumns";
-import { useFoodsStore } from "@/app/(admin)/admin/foods/_libs/useFoodsStore";
+
+import { useFoodsStore } from "@/app/(admin)/admin/foods-management/foods/_libs/useFoodsStore";
 import {
   useCreateFood,
+  useDeleteFood,
   useUpdateFood,
-} from "@/app/(admin)/admin/foods/_services/useMutations";
+} from "@/app/(admin)/admin/foods-management/foods/_services/useMutations";
 import {
   useFood,
   useFoods,
-} from "@/app/(admin)/admin/foods/_services/useQueries";
+} from "@/app/(admin)/admin/foods-management/foods/_services/useQueries";
 import {
   foodDefaultValues,
   foodSchema,
   FoodSchema,
-} from "@/app/(admin)/admin/foods/_types/schemas";
+} from "@/app/(admin)/admin/foods-management/foods/_types/schema";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
 import {
   Dialog,
   DialogContent,
@@ -25,8 +25,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { alert } from "@/lib/useGlobalStore";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus } from "lucide-react";
+import { Edit, Plus, Trash } from "lucide-react";
 import { useEffect } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
@@ -47,8 +49,7 @@ const Page = () => {
   const foodQuery = useFood();
   const createFoodMutation = useCreateFood();
   const updateFoodMutation = useUpdateFood();
-
-  const { foodsColumns } = useFoodsColumns();
+  const deleteFoodMutation = useDeleteFood();
 
   useEffect(() => {
     if (!!selectedFoodId && foodQuery.data) {
@@ -83,7 +84,7 @@ const Page = () => {
     createFoodMutation.isPending || updateFoodMutation.isPending;
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-semibold">Foods List</h1>
         <Dialog open={foodDialogOpen} onOpenChange={handleDialogOpenChange}>
@@ -169,10 +170,69 @@ const Page = () => {
         </Dialog>
       </div>
 
-      <div className="mt-4 border rounded-md">
-        <DataTable columns={foodsColumns} data={foodsQuery.data ?? []} />
+      <div className="grid grid-cols-4 gap-2">
+        {foodsQuery.data?.map((item) => (
+          <div
+            className="shadow-md rounded-lg flex flex-col p-6 gap-3"
+            key={item.id}
+          >
+            <div className="flex justify-between">
+              <p className="truncate">{item.name}</p>
+              <div className="flex gap-1">
+                <Button
+                  className="size-6"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    updateSelectedFoodId(item.id);
+                    updateFoodDialogOpen(true);
+                  }}
+                >
+                  <Edit />
+                </Button>
+                <Button
+                  className="size-6"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    alert({
+                      onConfirm: () => deleteFoodMutation.mutate(item.id),
+                    });
+                  }}
+                >
+                  <Trash />
+                </Button>
+              </div>
+            </div>
+            <Separator />
+            <div className="grid grid-cols-2 gap-5">
+              <div>
+                <p className="text-foreground/60 font-normal text-sm">
+                  Calories
+                </p>
+                <p className="text-sm font-medium">{item.calories} kcal</p>
+              </div>
+              <div>
+                <p className="text-foreground/60 font-normal text-sm">
+                  Carbohydrates
+                </p>
+                <p className="text-sm font-medium">{item.carbohydrates} g</p>
+              </div>
+              <div>
+                <p className="text-foreground/60 font-normal text-sm">
+                  Protein
+                </p>
+                <p className="text-sm font-medium">{item.protein} g</p>
+              </div>
+              <div>
+                <p className="text-foreground/60 font-normal text-sm">Fat</p>
+                <p className="text-sm font-medium">{item.fat} g</p>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
-    </div>
+    </>
   );
 };
 

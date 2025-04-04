@@ -1,6 +1,6 @@
 "use server";
 
-import { FoodSchema } from "@/app/(admin)/admin/foods/_types/schemas";
+import { FoodSchema } from "@/app/(admin)/admin/foods-management/foods/_types/schema";
 import db from "@/lib/db";
 import { executeAction } from "@/lib/executeAction";
 
