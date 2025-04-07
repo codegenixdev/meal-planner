@@ -24,7 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { ControlledInput } from "@/components/ui/controlled/controlled-input";
 import { alert } from "@/lib/useGlobalStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Edit, Plus, Trash } from "lucide-react";
@@ -103,7 +103,7 @@ const Page = () => {
               <FormProvider {...form}>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <Input<CategorySchema>
+                    <ControlledInput<CategorySchema>
                       name="name"
                       label="Name"
                       placeholder="Enter category name"

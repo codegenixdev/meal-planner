@@ -54,11 +54,13 @@ type FoodFilter = {
   maxCalories?: number;
   minProtein?: number;
   maxProtein?: number;
+  categoryId?: number;
   sortBy?: "name" | "calories" | "protein" | "carbohydrates" | "fat";
   sortOrder?: "asc" | "desc";
   page?: number;
   pageSize?: number;
 };
+
 const getFoods = async (filters?: FoodFilter) => {
   const {
     name,
@@ -66,6 +68,7 @@ const getFoods = async (filters?: FoodFilter) => {
     maxCalories,
     minProtein,
     maxProtein,
+    categoryId,
     sortBy = "name",
     sortOrder = "asc",
     page = 1,
@@ -102,6 +105,14 @@ const getFoods = async (filters?: FoodFilter) => {
     }
   }
 
+  if (categoryId !== undefined && categoryId !== 0) {
+    where.categories = {
+      some: {
+        categoryId: categoryId,
+      },
+    };
+  }
+
   const skip = (page - 1) * pageSize;
 
   return await db.food.findMany({
@@ -136,4 +147,11 @@ const getFood = async (id: number): Promise<FoodSchema> => {
   };
 };
 
-export { createFood, deleteFood, getFood, getFoods, updateFood };
+export {
+  createFood,
+  deleteFood,
+  getFood,
+  getFoods,
+  updateFood,
+  type FoodFilter,
+};
