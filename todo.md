@@ -1,5 +1,5 @@
 continue:
-put filters in popover or something (input ones)
+change filters to rhf and drawer
 add good relation assigning between entities in front
 
 add eslint and prettier
