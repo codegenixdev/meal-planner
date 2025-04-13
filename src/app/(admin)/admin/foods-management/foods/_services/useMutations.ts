@@ -3,7 +3,7 @@ import {
   deleteFood,
   updateFood,
 } from "@/app/(admin)/admin/foods-management/foods/_services/services";
-import { FoodSchema } from "@/app/(admin)/admin/foods-management/foods/_types/schema";
+import { FoodSchema } from "@/app/(admin)/admin/foods-management/foods/_types/foodSchema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 

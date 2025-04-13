@@ -1,5 +1,8 @@
 continue:
-change filters to rhf and drawer
+
+develop the landing phase
+send filters to server
+needs to save filters and pass to query
 add good relation assigning between entities in front
 
 add eslint and prettier
