@@ -9,6 +9,15 @@ import { toNumberSafe, toStringSafe } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 
 const createFood = async (data: FoodSchema) => {
+  console.log("foo", {
+    name: data.name.trim(),
+    calories: toNumberSafe(data.calories),
+    carbohydrates: toNumberSafe(data.carbohydrates),
+    fat: toNumberSafe(data.fat),
+    fiber: toNumberSafe(data.fiber),
+    sugar: toNumberSafe(data.sugar),
+    protein: toNumberSafe(data.protein),
+  });
   await executeAction({
     actionFn: () =>
       db.food.create({
@@ -21,7 +30,6 @@ const createFood = async (data: FoodSchema) => {
           sugar: toNumberSafe(data.sugar),
           protein: toNumberSafe(data.protein),
         },
-        select: {},
       }),
   });
 };
@@ -41,7 +49,6 @@ const updateFood = async (data: FoodSchema) => {
             sugar: toNumberSafe(data.sugar),
             protein: toNumberSafe(data.protein),
           },
-          select: {},
         }),
     });
   }
@@ -49,7 +56,7 @@ const updateFood = async (data: FoodSchema) => {
 
 const deleteFood = async (id: number) => {
   await executeAction({
-    actionFn: () => db.food.delete({ where: { id }, select: {} }),
+    actionFn: () => db.food.delete({ where: { id } }),
   });
 };
 
