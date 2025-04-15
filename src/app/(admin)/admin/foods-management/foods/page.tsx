@@ -24,7 +24,7 @@ const Page = () => {
       </div>
       <FoodFiltersDrawer />
       <div className="grid grid-cols-4 gap-2">
-        {foodsQuery.data?.map((item) => (
+        {foodsQuery.data?.data.map((item) => (
           <div
             className="shadow-md rounded-lg flex flex-col p-6 gap-3"
             key={item.id}

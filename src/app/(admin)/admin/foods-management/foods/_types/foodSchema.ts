@@ -1,14 +1,15 @@
+import { patterns } from "@/lib/constants";
 import { z } from "zod";
 
 const foodSchema = z.intersection(
   z.object({
-    name: z.string().min(1).max(255),
-    calories: z.coerce.number().nullable().optional(),
-    protein: z.coerce.number().nullable().optional(),
-    fat: z.coerce.number().nullable().optional(),
-    carbohydrates: z.coerce.number().nullable().optional(),
-    fiber: z.coerce.number().nullable().optional(),
-    sugar: z.coerce.number().nullable().optional(),
+    name: z.string().min(1).max(255).trim(),
+    calories: z.string().regex(patterns.zeroTo99999),
+    protein: z.string().regex(patterns.zeroTo99999),
+    fat: z.string().regex(patterns.zeroTo99999),
+    carbohydrates: z.string().regex(patterns.zeroTo99999),
+    fiber: z.string().regex(patterns.zeroTo99999),
+    sugar: z.string().regex(patterns.zeroTo99999),
     foodServingUnits: z.array(
       z.object({
         foodServingUnitId: z.number().min(1),
@@ -28,17 +29,17 @@ const foodDefaultValues: FoodSchema = {
   action: "create",
   foodServingUnits: [],
   name: "",
-  calories: 0,
-  carbohydrates: 0,
-  fat: 0,
-  fiber: 0,
-  protein: 0,
-  sugar: 0,
+  calories: "",
+  carbohydrates: "",
+  fat: "",
+  fiber: "",
+  protein: "",
+  sugar: "",
 };
 
 const servingUnitSchema = z.intersection(
   z.object({
-    name: z.string().min(1).max(255),
+    name: z.string().min(1).max(255).trim(),
   }),
   z.discriminatedUnion("action", [
     z.object({ action: z.literal("create") }),

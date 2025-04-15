@@ -1,10 +1,13 @@
-import { FoodFiltersSchema } from "@/app/(admin)/admin/foods-management/foods/_types/foodFilterSchema";
+import {
+  foodFiltersDefaultValues,
+  FoodFiltersSchema,
+} from "@/app/(admin)/admin/foods-management/foods/_types/foodFilterSchema";
 import { createStore } from "@/lib/createStore";
 
 type State = {
   selectedFoodId: number | null;
   foodDialogOpen: boolean;
-  foodFilters: FoodFiltersSchema | null;
+  foodFilters: FoodFiltersSchema;
   foodFiltersDrawerOpen: boolean;
 };
 
@@ -29,7 +32,7 @@ const useFoodsStore = createStore<Store>(
       set((state) => {
         state.foodDialogOpen = is;
       }),
-    foodFilters: null,
+    foodFilters: foodFiltersDefaultValues,
     updateFoodFilters: (filters) =>
       set((state) => {
         state.foodFilters = filters;

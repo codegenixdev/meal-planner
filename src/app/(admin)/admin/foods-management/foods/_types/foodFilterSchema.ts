@@ -1,12 +1,13 @@
+import { patterns } from "@/lib/constants";
 import { z } from "zod";
 
 const foodFiltersSchema = z.object({
-  name: z.string().optional(),
-  minCalories: z.coerce.number().min(0).max(9999).optional(),
-  maxCalories: z.coerce.number().min(0).max(9999).optional(),
-  minProtein: z.coerce.number().min(0).max(9999).optional(),
-  maxProtein: z.coerce.number().min(0).max(9999).optional(),
-  categoryId: z.coerce.number().optional().nullable(),
+  name: z.string(),
+  minCalories: z.string().regex(patterns.zeroTo99999),
+  maxCalories: z.string().regex(patterns.zeroTo99999),
+  minProtein: z.string().regex(patterns.zeroTo99999),
+  maxProtein: z.string().regex(patterns.zeroTo99999),
+  categoryId: z.string(),
   sortBy: z
     .enum(["name", "calories", "protein", "carbohydrates", "fat"])
     .optional(),
@@ -19,11 +20,11 @@ type FoodFiltersSchema = z.infer<typeof foodFiltersSchema>;
 
 const foodFiltersDefaultValues: FoodFiltersSchema = {
   name: "",
-  minCalories: 0,
-  maxCalories: 0,
-  minProtein: 0,
-  maxProtein: 0,
-  categoryId: 0,
+  minCalories: "",
+  maxCalories: "",
+  minProtein: "",
+  maxProtein: "",
+  categoryId: "",
   sortBy: "name",
   sortOrder: "desc",
   pageSize: 10,

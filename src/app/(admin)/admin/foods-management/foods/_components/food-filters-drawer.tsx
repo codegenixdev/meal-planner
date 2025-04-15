@@ -24,16 +24,16 @@ import { FilterIcon } from "lucide-react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 const FoodFiltersDrawer = () => {
+  const form = useForm<FoodFiltersSchema>({
+    defaultValues: foodFiltersDefaultValues,
+    resolver: zodResolver(foodFiltersSchema),
+  });
+
   const {
     updateFoodFilters,
     foodFiltersDrawerOpen,
     updateFoodFiltersDrawerOpen,
   } = useFoodsStore();
-
-  const form = useForm<FoodFiltersSchema>({
-    defaultValues: foodFiltersDefaultValues,
-    resolver: zodResolver(foodFiltersSchema),
-  });
 
   const categoriesQuery = useCategories();
 
@@ -58,7 +58,9 @@ const FoodFiltersDrawer = () => {
           <DrawerContent>
             <DrawerHeader className="text-left">
               <DrawerTitle>Filters</DrawerTitle>
-              <DrawerDescription>Filters</DrawerDescription>
+              <DrawerDescription>
+                Customize your food search criteria
+              </DrawerDescription>
             </DrawerHeader>
 
             <div className="p-4 space-y-2">
@@ -127,7 +129,6 @@ const FoodFiltersDrawer = () => {
                 variant="outline"
                 onClick={() => {
                   form.reset(foodFiltersDefaultValues);
-                  updateFoodFilters(foodFiltersDefaultValues);
                 }}
               >
                 Reset
