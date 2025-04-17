@@ -1,0 +1,125 @@
+"use server";
+
+import {
+  FoodFiltersSchema,
+  foodFiltersSchema,
+} from "@/app/(admin)/admin/foods-management/foods/_types/foodFilterSchema";
+import db from "@/lib/db";
+import { PaginatedResult } from "@/lib/types/paginatedResult";
+import { toStringSafe } from "@/lib/utils";
+import { Prisma } from "@prisma/client";
+
+type FoodWithServingUnits = Prisma.FoodGetPayload<{
+  include: {
+    foodServingUnits: true;
+  };
+}>;
+
+const getFoods = async (
+  filters: FoodFiltersSchema
+): Promise<PaginatedResult<FoodWithServingUnits>> => {
+  const validatedFilters = foodFiltersSchema.parse(filters);
+
+  const {
+    name,
+    caloriesRange = ["", ""],
+    proteinRange = ["", ""],
+    categoryId,
+    sortBy = "name",
+    sortOrder = "asc",
+    page = 1,
+    pageSize = 10,
+  } = validatedFilters || {};
+
+  const where: Prisma.FoodWhereInput = {};
+
+  if (name) {
+    where.name = { contains: name };
+  }
+
+  const [minCaloriesStr, maxCaloriesStr] = caloriesRange;
+  const numericMinCalories = minCaloriesStr
+    ? Number(minCaloriesStr)
+    : undefined;
+  const numericMaxCalories = maxCaloriesStr
+    ? Number(maxCaloriesStr)
+    : undefined;
+
+  if (numericMinCalories !== undefined || numericMaxCalories !== undefined) {
+    where.calories = {};
+    if (numericMinCalories !== undefined)
+      where.calories.gte = numericMinCalories;
+    if (numericMaxCalories !== undefined)
+      where.calories.lte = numericMaxCalories;
+  }
+
+  const [minProteinStr, maxProteinStr] = proteinRange;
+  const numericMinProtein = minProteinStr ? Number(minProteinStr) : undefined;
+  const numericMaxProtein = maxProteinStr ? Number(maxProteinStr) : undefined;
+
+  if (numericMinProtein !== undefined || numericMaxProtein !== undefined) {
+    where.protein = {};
+    if (numericMinProtein !== undefined) where.protein.gte = numericMinProtein;
+    if (numericMaxProtein !== undefined) where.protein.lte = numericMaxProtein;
+  }
+
+  const numericCategoryId = categoryId ? Number(categoryId) : undefined;
+  if (numericCategoryId !== undefined && numericCategoryId !== 0) {
+    where.categories = {
+      some: {
+        categoryId: numericCategoryId,
+      },
+    };
+  }
+
+  const skip = (page - 1) * pageSize;
+
+  const [total, data] = await Promise.all([
+    db.food.count({ where }),
+    db.food.findMany({
+      where,
+      orderBy: { [sortBy]: sortOrder },
+      skip,
+      take: pageSize,
+      include: { foodServingUnits: true },
+    }),
+  ]);
+
+  return {
+    data,
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
+};
+
+const getFood = async (id: number) => {
+  const res = await db.food.findFirst({
+    where: { id },
+    include: {
+      foodServingUnits: true,
+    },
+  });
+
+  if (!res) return null;
+
+  return {
+    action: "update" as const,
+    id,
+    name: toStringSafe(res.name),
+    calories: toStringSafe(res.calories),
+    carbohydrates: toStringSafe(res.carbohydrates),
+    fat: toStringSafe(res.fat),
+    fiber: toStringSafe(res.fiber),
+    protein: toStringSafe(res.protein),
+    sugar: toStringSafe(res.sugar),
+    foodServingUnits:
+      res.foodServingUnits.map((item) => ({
+        foodServingUnitId: item.id,
+        grams: toStringSafe(item.grams),
+      })) ?? [],
+  };
+};
+
+export { getFood, getFoods };

@@ -1,3 +1,4 @@
+"use client";
 import {
   Dialog,
   DialogContent,
@@ -11,21 +12,21 @@ import { Plus } from "lucide-react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { Button } from "@/components/ui/button";
-import { ControlledInput } from "@/components/ui/controlled/controlled-input";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
-import { useFoodsStore } from "@/app/(admin)/admin/foods-management/foods/_libs/useFoodsStore";
+import { useFoodsStore } from "@/app/(admin)/admin/foods-management/foods/_libs/use-food-store";
+import {
+  useCreateFood,
+  useUpdateFood,
+} from "@/app/(admin)/admin/foods-management/foods/_services/use-food-mutations";
+import { useFood } from "@/app/(admin)/admin/foods-management/foods/_services/use-food-queries";
 import {
   foodDefaultValues,
   foodSchema,
   FoodSchema,
 } from "@/app/(admin)/admin/foods-management/foods/_types/foodSchema";
-import {
-  useCreateFood,
-  useUpdateFood,
-} from "@/app/(admin)/admin/foods-management/foods/_services/useMutations";
+import { Button } from "@/components/ui/button";
+import { ControlledInput } from "@/components/ui/controlled/controlled-input";
 import { useEffect } from "react";
-import { useFood } from "@/app/(admin)/admin/foods-management/foods/_services/useQueries";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 const FoodFormDialog = () => {
   const form = useForm<FoodSchema>({

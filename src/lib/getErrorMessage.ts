@@ -1,4 +1,7 @@
 import { Prisma } from "@prisma/client";
+import { fromError } from "zod-validation-error";
+
+import { ZodError } from "zod";
 
 const PRISMA_ERROR_CODES = new Map<string, string>([
   [
@@ -50,6 +53,13 @@ const PRISMA_ERROR_CODES = new Map<string, string>([
 ]);
 
 const getErrorMessage = (error: unknown): string => {
+  if (error instanceof ZodError) {
+    const message = fromError(error);
+    if (message) {
+      return message.toString();
+    }
+  }
+
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     const errorCode = error.code;
     const message = PRISMA_ERROR_CODES.get(errorCode);

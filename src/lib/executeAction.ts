@@ -7,7 +7,6 @@ const executeAction = async <T>({ actionFn }: Options<T>) => {
   try {
     await actionFn();
   } catch (error) {
-    console.log("error", error);
     throw new Error(getErrorMessage(error));
   }
 };

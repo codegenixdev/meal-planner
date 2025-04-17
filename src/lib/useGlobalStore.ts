@@ -40,6 +40,7 @@ const useGlobalStore = createStore<Store>(
   }),
   {
     name: "global-store",
+    excludeFromPersist: ["alertOpen"],
   }
 );
 

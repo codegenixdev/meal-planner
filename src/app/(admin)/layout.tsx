@@ -2,6 +2,7 @@
 import { AlertDialogProvider } from "@/components/ui/alert-dialog-provider";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
+import { customErrorMap } from "@/lib/customErrorMap";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -9,6 +10,9 @@ import { Apple, ChevronDown, ChevronLeft, Home, Menu } from "lucide-react";
 import Link from "next/link";
 import { ReactNode, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
+
+z.setErrorMap(customErrorMap);
 
 type RouteGroup = {
   group: string;

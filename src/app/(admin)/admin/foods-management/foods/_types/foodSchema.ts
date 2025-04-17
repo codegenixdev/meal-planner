@@ -1,25 +1,26 @@
 import { patterns } from "@/lib/constants";
+import { regexSchema, requiredStringSchema } from "@/lib/zod-schemas";
 import { z } from "zod";
 
 const foodSchema = z.intersection(
   z.object({
-    name: z.string().min(1).max(255).trim(),
-    calories: z.string().regex(patterns.zeroTo99999),
-    protein: z.string().regex(patterns.zeroTo99999),
-    fat: z.string().regex(patterns.zeroTo99999),
-    carbohydrates: z.string().regex(patterns.zeroTo99999),
-    fiber: z.string().regex(patterns.zeroTo99999),
-    sugar: z.string().regex(patterns.zeroTo99999),
+    name: requiredStringSchema,
+    calories: regexSchema(patterns.zeroTo9999),
+    protein: regexSchema(patterns.zeroTo9999),
+    fat: regexSchema(patterns.zeroTo9999),
+    carbohydrates: regexSchema(patterns.zeroTo9999),
+    fiber: regexSchema(patterns.zeroTo9999),
+    sugar: regexSchema(patterns.zeroTo9999),
     foodServingUnits: z.array(
       z.object({
-        foodServingUnitId: z.number().min(1),
-        grams: z.coerce.number().min(0),
+        foodServingUnitId: z.number(),
+        grams: regexSchema(patterns.zeroTo9999),
       })
     ),
   }),
   z.discriminatedUnion("action", [
     z.object({ action: z.literal("create") }),
-    z.object({ action: z.literal("update"), id: z.number().min(1) }),
+    z.object({ action: z.literal("update"), id: z.number() }),
   ])
 );
 
@@ -39,11 +40,11 @@ const foodDefaultValues: FoodSchema = {
 
 const servingUnitSchema = z.intersection(
   z.object({
-    name: z.string().min(1).max(255).trim(),
+    name: requiredStringSchema,
   }),
   z.discriminatedUnion("action", [
     z.object({ action: z.literal("create") }),
-    z.object({ action: z.literal("update"), id: z.number().min(1) }),
+    z.object({ action: z.literal("update"), id: z.number() }),
   ])
 );
 

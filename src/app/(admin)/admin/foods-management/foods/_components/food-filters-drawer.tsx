@@ -1,14 +1,15 @@
+"use client";
 import { useCategories } from "@/app/(admin)/admin/foods-management/categories/_services/useQueries";
 
-import { useFoodsStore } from "@/app/(admin)/admin/foods-management/foods/_libs/useFoodsStore";
+import { useFoodsStore } from "@/app/(admin)/admin/foods-management/foods/_libs/use-food-store";
 import {
   FoodFiltersSchema,
   foodFiltersDefaultValues,
   foodFiltersSchema,
 } from "@/app/(admin)/admin/foods-management/foods/_types/foodFilterSchema";
 import { Button } from "@/components/ui/button";
-import { ControlledInput } from "@/components/ui/controlled/controlled-input";
 import { ControlledSelect } from "@/components/ui/controlled/controlled-select";
+import { ControlledSlider } from "@/components/ui/controlled/controlled-slider";
 import {
   Drawer,
   DrawerClose,
@@ -39,6 +40,7 @@ const FoodFiltersDrawer = () => {
 
   const onSubmit: SubmitHandler<FoodFiltersSchema> = (data) => {
     updateFoodFilters(data);
+    updateFoodFiltersDrawerOpen(false);
   };
 
   return (
@@ -46,6 +48,7 @@ const FoodFiltersDrawer = () => {
       open={foodFiltersDrawerOpen}
       onOpenChange={updateFoodFiltersDrawerOpen}
       direction="right"
+      handleOnly
     >
       <DrawerTrigger asChild>
         <Button variant="outline">
@@ -98,25 +101,17 @@ const FoodFiltersDrawer = () => {
               </div>
 
               <div className="flex gap-2 flex-wrap">
-                <ControlledInput<FoodFiltersSchema>
-                  label="Min Calories"
-                  name="minCalories"
-                  type="number"
+                <ControlledSlider<FoodFiltersSchema>
+                  name="caloriesRange"
+                  label="Calories"
+                  min={0}
+                  max={9999}
                 />
-                <ControlledInput<FoodFiltersSchema>
-                  label="Max Calories"
-                  name="maxCalories"
-                  type="number"
-                />
-                <ControlledInput<FoodFiltersSchema>
-                  label="Min Protein"
-                  name="minProtein"
-                  type="number"
-                />
-                <ControlledInput<FoodFiltersSchema>
-                  label="Max Protein"
-                  name="maxProtein"
-                  type="number"
+                <ControlledSlider<FoodFiltersSchema>
+                  name="proteinRange"
+                  label="Protein"
+                  min={0}
+                  max={9999}
                 />
               </div>
             </div>
