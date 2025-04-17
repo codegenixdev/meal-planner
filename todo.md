@@ -1,5 +1,6 @@
 continue:
 
+name for filter
 change min and max filters to double way sliders
 develop the landing phase
 send filters to server

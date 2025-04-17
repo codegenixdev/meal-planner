@@ -64,7 +64,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="flex">
-      <div className="w-screen shadow-sm fixed h-13" />
+      <div className="w-screen shadow-sm fixed h-13 bg-background" />
       <Collapsible.Root
         className="fixed h-dvh top-0 left-0"
         open={open}

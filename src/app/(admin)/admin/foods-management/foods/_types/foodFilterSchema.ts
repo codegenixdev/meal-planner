@@ -30,7 +30,7 @@ const foodFiltersDefaultValues: FoodFiltersSchema = {
   categoryId: "",
   sortBy: "name",
   sortOrder: "desc",
-  pageSize: 10,
+  pageSize: 12,
   page: 1,
 };
 

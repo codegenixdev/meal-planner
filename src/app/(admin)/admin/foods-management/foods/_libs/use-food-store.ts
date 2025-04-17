@@ -16,6 +16,7 @@ type Actions = {
   updateFoodDialogOpen: (is: State["foodDialogOpen"]) => void;
   updateFoodFilters: (filters: State["foodFilters"]) => void;
   updateFoodFiltersDrawerOpen: (is: State["foodFiltersDrawerOpen"]) => void;
+  updateFoodFiltersPage: (action: "next" | "prev" | number) => void;
 };
 
 type Store = State & Actions;
@@ -41,6 +42,26 @@ const useFoodsStore = createStore<Store>(
     updateFoodFiltersDrawerOpen: (is) =>
       set((state) => {
         state.foodFiltersDrawerOpen = is;
+      }),
+    updateFoodFiltersPage: (action) =>
+      set((state) => {
+        const currentPage = state.foodFilters.page;
+        let newPage = currentPage;
+
+        if (action === "next") {
+          newPage = currentPage + 1;
+        } else if (action === "prev") {
+          newPage = Math.max(currentPage - 1, 1);
+        } else if (typeof action === "number") {
+          newPage = action;
+        }
+
+        return {
+          foodFilters: {
+            ...state.foodFilters,
+            page: newPage,
+          },
+        };
       }),
   }),
   {
