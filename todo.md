@@ -2,6 +2,10 @@ continue:
 add client side
 https://dribbble.com/shots/25289981-Nutrigo-Nutrition-Diet-Dashboard-Figma-Template
 
+auth
+water logs
+weightlogs
+add blog and posts, receipes and other
 center layout from layout.tsx instead of page.tsx
 remove outline red for input error
 dialog vertically scrollable if to much content
