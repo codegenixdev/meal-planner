@@ -3,7 +3,7 @@ import { regexSchema } from "@/lib/zod-schemas";
 import { z } from "zod";
 
 const foodFiltersSchema = z.object({
-  name: z.string(),
+  searchTerm: z.string(),
   caloriesRange: z.tuple([
     regexSchema(patterns.zeroTo9999),
     regexSchema(patterns.zeroTo9999),
@@ -24,9 +24,9 @@ const foodFiltersSchema = z.object({
 type FoodFiltersSchema = z.infer<typeof foodFiltersSchema>;
 
 const foodFiltersDefaultValues: FoodFiltersSchema = {
-  name: "",
-  caloriesRange: ["", ""],
-  proteinRange: ["", ""],
+  searchTerm: "",
+  caloriesRange: ["0", "9999"],
+  proteinRange: ["0", "9999"],
   categoryId: "",
   sortBy: "name",
   sortOrder: "desc",

@@ -35,7 +35,7 @@ const Pagination = ({
     prevPageRef.current = currentPage;
   }, [currentPage, scrollToTopOnPaginate]);
 
-  if (!totalPages) {
+  if (totalPages === undefined) {
     return (
       <div className="flex justify-center">
         <div className="flex items-center gap-1">

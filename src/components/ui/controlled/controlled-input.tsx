@@ -1,12 +1,14 @@
 "use client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import { ComponentProps } from "react";
 import { Controller, FieldValues, Path, useFormContext } from "react-hook-form";
 
 type InputProps<T extends FieldValues> = {
   name: Path<T>;
   label?: string;
+  containerClassName?: string;
 } & ComponentProps<"input">;
 
 const ControlledInput = <T extends FieldValues>({
@@ -14,12 +16,13 @@ const ControlledInput = <T extends FieldValues>({
   type,
   name,
   label,
+  containerClassName,
   ...props
 }: InputProps<T>) => {
   const { control } = useFormContext<T>();
 
   return (
-    <div className="space-y-2 w-full">
+    <div className={cn("space-y-2 w-full", containerClassName)}>
       {!!label && <Label htmlFor={name}>{label}</Label>}
 
       <Controller

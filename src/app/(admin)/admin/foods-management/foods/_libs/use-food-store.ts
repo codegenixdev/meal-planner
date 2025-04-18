@@ -17,6 +17,9 @@ type Actions = {
   updateFoodFilters: (filters: State["foodFilters"]) => void;
   updateFoodFiltersDrawerOpen: (is: State["foodFiltersDrawerOpen"]) => void;
   updateFoodFiltersPage: (action: "next" | "prev" | number) => void;
+  updateFoodFiltersSearchTerm: (
+    str: State["foodFilters"]["searchTerm"]
+  ) => void;
 };
 
 type Store = State & Actions;
@@ -62,6 +65,10 @@ const useFoodsStore = createStore<Store>(
             page: newPage,
           },
         };
+      }),
+    updateFoodFiltersSearchTerm: (searchTerm) =>
+      set((state) => {
+        state.foodFilters.searchTerm = searchTerm;
       }),
   }),
   {

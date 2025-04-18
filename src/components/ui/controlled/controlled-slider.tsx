@@ -1,23 +1,15 @@
 "use client";
 
-import * as React from "react";
-import * as SliderPrimitive from "@radix-ui/react-slider";
 import { cn } from "@/lib/utils";
-import {
-  Controller,
-  FieldValues,
-  Path,
-  PathValue,
-  useFormContext,
-} from "react-hook-form";
-import { Button } from "@/components/ui/button"; // Import your button component
+import * as SliderPrimitive from "@radix-ui/react-slider";
+import * as React from "react";
+import { Controller, FieldValues, Path, useFormContext } from "react-hook-form";
 
 interface SliderProps<T extends FieldValues>
   extends React.ComponentProps<typeof SliderPrimitive.Root> {
   name: Path<T>;
   label?: string;
   minStepsBetweenThumbs?: number;
-  showResetButton?: boolean;
 }
 
 function ControlledSlider<T extends FieldValues>({
@@ -28,14 +20,9 @@ function ControlledSlider<T extends FieldValues>({
   min = 0,
   max = 100,
   minStepsBetweenThumbs = 1,
-  showResetButton = true,
   ...props
 }: SliderProps<T>) {
-  const { control, setValue } = useFormContext<T>();
-
-  const handleReset = () => {
-    setValue(name, ["", ""] as PathValue<T, Path<T>>);
-  };
+  const { control } = useFormContext<T>();
 
   return (
     <Controller
@@ -67,17 +54,6 @@ function ControlledSlider<T extends FieldValues>({
                   {label}
                 </label>
               )}
-              {showResetButton && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleReset}
-                  className="text-xs h-6 px-2"
-                >
-                  Reset
-                </Button>
-              )}
             </div>
 
             <SliderPrimitive.Root
@@ -95,13 +71,13 @@ function ControlledSlider<T extends FieldValues>({
               <SliderPrimitive.Track
                 data-slot="slider-track"
                 className={cn(
-                  "bg-muted relative grow overflow-hidden rounded-full data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5"
+                  "cursor-pointer bg-muted relative grow overflow-hidden rounded-full data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5"
                 )}
               >
                 <SliderPrimitive.Range
                   data-slot="slider-range"
                   className={cn(
-                    "bg-primary absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full"
+                    "cursor-pointer bg-primary absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full"
                   )}
                 />
               </SliderPrimitive.Track>
@@ -109,7 +85,7 @@ function ControlledSlider<T extends FieldValues>({
                 <SliderPrimitive.Thumb
                   data-slot="slider-thumb"
                   key={index}
-                  className="border-primary bg-background ring-ring/50 block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
+                  className="cursor-pointer border-primary bg-background ring-ring/50 block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
                 />
               ))}
             </SliderPrimitive.Root>

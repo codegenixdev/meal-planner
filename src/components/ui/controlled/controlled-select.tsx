@@ -51,7 +51,7 @@ const ControlledSelect = <T extends FieldValues>({
                     className="absolute right-8 top-1/2 -translate-y-1/2 text-foreground/40 hover:bg-accent/0 size-4"
                     size="icon"
                     onClick={() => {
-                      onChange(null);
+                      onChange("");
                     }}
                   >
                     <X />

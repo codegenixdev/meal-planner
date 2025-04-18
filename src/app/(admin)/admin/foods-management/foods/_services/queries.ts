@@ -21,7 +21,7 @@ const getFoods = async (
   const validatedFilters = foodFiltersSchema.parse(filters);
 
   const {
-    name,
+    searchTerm,
     caloriesRange = ["", ""],
     proteinRange = ["", ""],
     categoryId,
@@ -33,17 +33,15 @@ const getFoods = async (
 
   const where: Prisma.FoodWhereInput = {};
 
-  if (name) {
-    where.name = { contains: name };
+  if (searchTerm) {
+    where.name = { contains: searchTerm };
   }
 
   const [minCaloriesStr, maxCaloriesStr] = caloriesRange;
-  const numericMinCalories = minCaloriesStr
-    ? Number(minCaloriesStr)
-    : undefined;
-  const numericMaxCalories = maxCaloriesStr
-    ? Number(maxCaloriesStr)
-    : undefined;
+  const numericMinCalories =
+    minCaloriesStr === "" ? undefined : Number(minCaloriesStr);
+  const numericMaxCalories =
+    maxCaloriesStr === "" ? undefined : Number(maxCaloriesStr);
 
   if (numericMinCalories !== undefined || numericMaxCalories !== undefined) {
     where.calories = {};
@@ -54,8 +52,10 @@ const getFoods = async (
   }
 
   const [minProteinStr, maxProteinStr] = proteinRange;
-  const numericMinProtein = minProteinStr ? Number(minProteinStr) : undefined;
-  const numericMaxProtein = maxProteinStr ? Number(maxProteinStr) : undefined;
+  const numericMinProtein =
+    minProteinStr === "" ? undefined : Number(minProteinStr);
+  const numericMaxProtein =
+    maxProteinStr === "" ? undefined : Number(maxProteinStr);
 
   if (numericMinProtein !== undefined || numericMaxProtein !== undefined) {
     where.protein = {};

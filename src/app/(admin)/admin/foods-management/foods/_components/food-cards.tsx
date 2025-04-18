@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
 import { Separator } from "@/components/ui/separator";
 import { alert } from "@/lib/useGlobalStore";
-import { Edit, Trash } from "lucide-react";
+import { BeanOff, Edit, Trash } from "lucide-react";
 
 const FoodCards = () => {
   const {
@@ -21,6 +21,27 @@ const FoodCards = () => {
 
   const deleteFoodMutation = useDeleteFood();
   const totalPages = foodsQuery.data?.totalPages;
+
+  if (totalPages === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <BeanOff className="text-primary mb-2" />
+        <h3 className="text-lg font-medium">No foods found</h3>
+        <p className="text-sm text-foreground/60 mt-1">
+          Try adjusting your filters or add new foods
+        </p>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => {
+            updateFoodDialogOpen(true);
+          }}
+        >
+          Add new food
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
