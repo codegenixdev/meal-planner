@@ -1,4 +1,5 @@
 import { FoodSchema } from "@/app/(admin)/admin/foods-management/foods/_types/foodSchema";
+import { ServingUnitFormDialog } from "@/app/(admin)/admin/foods-management/serving-units/_components/serving-unit-form-dialog";
 import { useServingUnits } from "@/app/(admin)/admin/foods-management/serving-units/_services/useQueries";
 import { Button } from "@/components/ui/button";
 import { ControlledInput } from "@/components/ui/controlled/controlled-input";
@@ -44,7 +45,7 @@ const SpecifyFoodServingUnits = () => {
               className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end"
               key={field.id}
             >
-              <div>
+              <div className="col-span-1 flex items-end">
                 <ControlledSelect<FoodSchema>
                   label="Food Serving Unit"
                   name={`foodServingUnits.${index}.foodServingUnitId`}
@@ -54,7 +55,9 @@ const SpecifyFoodServingUnits = () => {
                   }))}
                   placeholder="Select unit..."
                 />
+                <ServingUnitFormDialog smallTrigger />
               </div>
+
               <div>
                 <ControlledInput<FoodSchema>
                   name={`foodServingUnits.${index}.grams`}

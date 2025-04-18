@@ -30,6 +30,9 @@ import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { ControlledSelect } from "@/components/ui/controlled/controlled-select";
 import { useCategories } from "@/app/(admin)/admin/foods-management/categories/_services/useQueries";
 import { SpecifyFoodServingUnits } from "@/app/(admin)/admin/foods-management/foods/_components/specify-food-serving-units";
+import { CategoryFormDialog } from "@/app/(admin)/admin/foods-management/categories/_components/category-form-dialog";
+import { useCategoriesStore } from "@/app/(admin)/admin/foods-management/categories/_libs/useCategoriesStore";
+import { useServingUnitsStore } from "@/app/(admin)/admin/foods-management/serving-units/_libs/useServingUnitsStore";
 
 const FoodFormDialog = () => {
   const form = useForm<FoodSchema>({
@@ -53,6 +56,9 @@ const FoodFormDialog = () => {
     updateFoodDialogOpen,
   } = useFoodsStore();
 
+  const { categoryDialogOpen } = useCategoriesStore();
+  const { servingUnitDialogOpen } = useServingUnitsStore();
+
   useEffect(() => {
     if (!!selectedFoodId && foodQuery.data) {
       form.reset(foodQuery.data);
@@ -71,6 +77,8 @@ const FoodFormDialog = () => {
   const handleSuccess = () => {
     handleDialogOpenChange(false);
   };
+
+  const disabledSubmit = servingUnitDialogOpen || categoryDialogOpen;
 
   const onSubmit: SubmitHandler<FoodSchema> = (data) => {
     if (data.action === "create") {
@@ -96,10 +104,13 @@ const FoodFormDialog = () => {
             {selectedFoodId ? "Edit Food" : "Create a New Food"}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form
+          onSubmit={disabledSubmit ? undefined : form.handleSubmit(onSubmit)}
+          className="space-y-6"
+        >
           <FormProvider {...form}>
             <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
+              <div className="grid col-span-1">
                 <ControlledInput<FoodSchema>
                   name="name"
                   label="Name"
@@ -107,7 +118,7 @@ const FoodFormDialog = () => {
                 />
               </div>
 
-              <div className="col-span-2">
+              <div className="col-span-1 flex items-end">
                 <ControlledSelect<FoodSchema>
                   label="Category"
                   name="categoryId"
@@ -116,6 +127,7 @@ const FoodFormDialog = () => {
                     value: item.id,
                   }))}
                 />
+                <CategoryFormDialog smallTrigger />
               </div>
 
               <div>
