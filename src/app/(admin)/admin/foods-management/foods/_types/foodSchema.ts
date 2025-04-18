@@ -11,9 +11,10 @@ const foodSchema = z.intersection(
     carbohydrates: regexSchema(patterns.zeroTo9999),
     fiber: regexSchema(patterns.zeroTo9999),
     sugar: regexSchema(patterns.zeroTo9999),
+    categoryId: requiredStringSchema,
     foodServingUnits: z.array(
       z.object({
-        foodServingUnitId: z.number(),
+        foodServingUnitId: requiredStringSchema,
         grams: regexSchema(patterns.zeroTo9999),
       })
     ),
@@ -30,6 +31,7 @@ const foodDefaultValues: FoodSchema = {
   action: "create",
   foodServingUnits: [],
   name: "",
+  categoryId: "",
   calories: "",
   carbohydrates: "",
   fat: "",

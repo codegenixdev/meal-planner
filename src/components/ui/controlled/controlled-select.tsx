@@ -30,8 +30,12 @@ const ControlledSelect = <T extends FieldValues>({
 }: SelectProps<T>) => {
   const { control } = useFormContext<T>();
   return (
-    <div className="space-y-2 w-full">
-      {!!label && <Label htmlFor={name}>{label}</Label>}
+    <div className="w-full">
+      {!!label && (
+        <Label className="mb-2" htmlFor={name}>
+          {label}
+        </Label>
+      )}
       <Controller
         name={name}
         control={control}

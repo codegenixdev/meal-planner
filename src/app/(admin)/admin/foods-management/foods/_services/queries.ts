@@ -4,6 +4,7 @@ import {
   FoodFiltersSchema,
   foodFiltersSchema,
 } from "@/app/(admin)/admin/foods-management/foods/_types/foodFilterSchema";
+import { FoodSchema } from "@/app/(admin)/admin/foods-management/foods/_types/foodSchema";
 import db from "@/lib/db";
 import { PaginatedResult } from "@/lib/types/paginatedResult";
 import { toStringSafe } from "@/lib/utils";
@@ -65,10 +66,8 @@ const getFoods = async (
 
   const numericCategoryId = categoryId ? Number(categoryId) : undefined;
   if (numericCategoryId !== undefined && numericCategoryId !== 0) {
-    where.categories = {
-      some: {
-        categoryId: numericCategoryId,
-      },
+    where.category = {
+      id: numericCategoryId,
     };
   }
 
@@ -94,7 +93,7 @@ const getFoods = async (
   };
 };
 
-const getFood = async (id: number) => {
+const getFood = async (id: number): Promise<FoodSchema | null> => {
   const res = await db.food.findFirst({
     where: { id },
     include: {
@@ -114,9 +113,10 @@ const getFood = async (id: number) => {
     fiber: toStringSafe(res.fiber),
     protein: toStringSafe(res.protein),
     sugar: toStringSafe(res.sugar),
+    categoryId: toStringSafe(res.categoryId),
     foodServingUnits:
       res.foodServingUnits.map((item) => ({
-        foodServingUnitId: item.id,
+        foodServingUnitId: toStringSafe(item.servingUnitId),
         grams: toStringSafe(item.grams),
       })) ?? [],
   };

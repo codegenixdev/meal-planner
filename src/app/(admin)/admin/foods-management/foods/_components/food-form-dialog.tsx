@@ -27,6 +27,9 @@ import { Button } from "@/components/ui/button";
 import { ControlledInput } from "@/components/ui/controlled/controlled-input";
 import { useEffect } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import { ControlledSelect } from "@/components/ui/controlled/controlled-select";
+import { useCategories } from "@/app/(admin)/admin/foods-management/categories/_services/useQueries";
+import { SpecifyFoodServingUnits } from "@/app/(admin)/admin/foods-management/foods/_components/specify-food-serving-units";
 
 const FoodFormDialog = () => {
   const form = useForm<FoodSchema>({
@@ -35,6 +38,7 @@ const FoodFormDialog = () => {
   });
 
   const foodQuery = useFood();
+  const categoriesQuery = useCategories();
 
   const createFoodMutation = useCreateFood();
   const updateFoodMutation = useUpdateFood();
@@ -102,6 +106,18 @@ const FoodFormDialog = () => {
                   placeholder="Enter food name"
                 />
               </div>
+
+              <div className="col-span-2">
+                <ControlledSelect<FoodSchema>
+                  label="Category"
+                  name="categoryId"
+                  options={categoriesQuery.data?.map((item) => ({
+                    label: item.name,
+                    value: item.id,
+                  }))}
+                />
+              </div>
+
               <div>
                 <ControlledInput<FoodSchema>
                   name="calories"
@@ -149,6 +165,9 @@ const FoodFormDialog = () => {
                   type="number"
                   placeholder="grams"
                 />
+              </div>
+              <div className="col-span-2">
+                <SpecifyFoodServingUnits />
               </div>
             </div>
           </FormProvider>
