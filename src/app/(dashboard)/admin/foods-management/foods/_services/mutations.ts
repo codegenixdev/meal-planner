@@ -37,8 +37,6 @@ const createFood = async (data: FoodSchema) => {
           });
         })
       );
-
-      return food;
     },
   });
 };

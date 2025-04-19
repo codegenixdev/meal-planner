@@ -1,5 +1,8 @@
 continue:
-add client side
+
+complete meal form and test the crud
+
+add client side dashboard
 https://dribbble.com/shots/25289981-Nutrigo-Nutrition-Diet-Dashboard-Figma-Template
 
 auth

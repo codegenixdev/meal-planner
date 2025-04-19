@@ -26,12 +26,13 @@ model Food {
   sugar            Float?
   foodServingUnits FoodServingUnit[]
   servingUnits     ServingUnit[]
-  meal             Meal?             @relation(fields: [mealId], references: [id])
-  mealId           Int?
   category         Category?         @relation(fields: [categoryId], references: [id])
   categoryId       Int?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+  Meal             Meal?             @relation(fields: [mealId], references: [id])
+  mealId           Int?
+  MealFood         MealFood[]
 }
 
 model ServingUnit {
@@ -42,6 +43,7 @@ model ServingUnit {
   foodId          Int?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+  MealFood        MealFood[]
 }
 
 model FoodServingUnit {
@@ -66,12 +68,27 @@ model User {
 }
 
 model Meal {
-  id        Int      @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
+  dateTime  DateTime
   foods     Food[]
-  user      User?    @relation(fields: [userId], references: [id])
+  user      User?      @relation(fields: [userId], references: [id])
   userId    Int?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  mealFoods MealFood[]
+}
+
+model MealFood {
+  id            Int         @id @default(autoincrement())
+  food          Food        @relation(fields: [foodId], references: [id])
+  meal          Meal        @relation(fields: [mealId], references: [id])
+  foodId        Int
+  mealId        Int
+  amount        Float
+  servingUnit   ServingUnit @relation(fields: [servingUnitId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  servingUnitId Int
 }
 
 model WeightHistory {
