@@ -1,5 +1,5 @@
 "use client";
-import { useCategories } from "@/app/(dashboard)/admin/foods-management/categories/_services/useQueries";
+import { useCategories } from "@/app/(dashboard)/admin/foods-management/categories/_services/use-queries";
 
 import { useFoodsStore } from "@/app/(dashboard)/admin/foods-management/foods/_libs/use-food-store";
 import {

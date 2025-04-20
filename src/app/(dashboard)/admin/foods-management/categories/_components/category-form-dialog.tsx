@@ -4,8 +4,8 @@ import { useCategoriesStore } from "@/app/(dashboard)/admin/foods-management/cat
 import {
   useCreateCategory,
   useUpdateCategory,
-} from "@/app/(dashboard)/admin/foods-management/categories/_services/useMutations";
-import { useCategory } from "@/app/(dashboard)/admin/foods-management/categories/_services/useQueries";
+} from "@/app/(dashboard)/admin/foods-management/categories/_services/use-mutations";
+import { useCategory } from "@/app/(dashboard)/admin/foods-management/categories/_services/use-queries";
 import {
   categoryDefaultValues,
   categorySchema,

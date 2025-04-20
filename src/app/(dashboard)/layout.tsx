@@ -1,15 +1,12 @@
 "use client";
-import { AlertDialogProvider } from "@/components/ui/alert-dialog-provider";
 import { Button } from "@/components/ui/button";
-import { Toaster } from "@/components/ui/sonner";
 import { customErrorMap } from "@/lib/customErrorMap";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Apple, ChevronDown, ChevronLeft, Home, Menu } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
-import { toast } from "sonner";
 import { z } from "zod";
 
 z.setErrorMap(customErrorMap);
@@ -44,19 +41,6 @@ const routeGroups: RouteGroup[] = [
     ],
   },
 ];
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    mutations: {
-      onError: (e) => {
-        toast.error(e.message);
-      },
-      onSuccess: () => {
-        toast.error("Operation was successful.");
-      },
-    },
-  },
-});
 
 type LayoutProps = { children: ReactNode };
 const Layout = ({ children }: LayoutProps) => {
@@ -102,11 +86,7 @@ const Layout = ({ children }: LayoutProps) => {
           open ? "ml-64" : "ml-0"
         }`}
       >
-        <QueryClientProvider client={queryClient}>
-          {children}
-        </QueryClientProvider>
-        <Toaster />
-        <AlertDialogProvider />
+        {children}
       </main>
     </div>
   );

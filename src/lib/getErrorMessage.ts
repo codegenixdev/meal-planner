@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { fromError } from "zod-validation-error";
 
 import { ZodError } from "zod";
+import { AuthError } from "next-auth";
 
 const PRISMA_ERROR_CODES = new Map<string, string>([
   [
@@ -53,7 +54,9 @@ const PRISMA_ERROR_CODES = new Map<string, string>([
 ]);
 
 const getErrorMessage = (error: unknown): string => {
-  if (error instanceof ZodError) {
+  if (error instanceof AuthError) {
+    return "Wrong credentials or the user did not found.";
+  } else if (error instanceof ZodError) {
     const message = fromError(error);
     if (message) {
       return message.toString();

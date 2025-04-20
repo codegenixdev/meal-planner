@@ -28,7 +28,7 @@ import { ControlledInput } from "@/components/ui/controlled/controlled-input";
 import { useEffect } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { ControlledSelect } from "@/components/ui/controlled/controlled-select";
-import { useCategories } from "@/app/(dashboard)/admin/foods-management/categories/_services/useQueries";
+import { useCategories } from "@/app/(dashboard)/admin/foods-management/categories/_services/use-queries";
 import { SpecifyFoodServingUnits } from "@/app/(dashboard)/admin/foods-management/foods/_components/specify-food-serving-units";
 import { CategoryFormDialog } from "@/app/(dashboard)/admin/foods-management/categories/_components/category-form-dialog";
 import { useCategoriesStore } from "@/app/(dashboard)/admin/foods-management/categories/_libs/useCategoriesStore";

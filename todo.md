@@ -1,6 +1,8 @@
 continue:
 
-complete meal form and test the crud
+accesstypes
+logout
+complete meal form and test the crud (now we have user id)
 
 add client side dashboard
 https://dribbble.com/shots/25289981-Nutrigo-Nutrition-Diet-Dashboard-Figma-Template

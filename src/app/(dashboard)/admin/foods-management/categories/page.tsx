@@ -2,8 +2,8 @@
 
 import { CategoryFormDialog } from "@/app/(dashboard)/admin/foods-management/categories/_components/category-form-dialog";
 import { useCategoriesStore } from "@/app/(dashboard)/admin/foods-management/categories/_libs/useCategoriesStore";
-import { useDeleteCategory } from "@/app/(dashboard)/admin/foods-management/categories/_services/useMutations";
-import { useCategories } from "@/app/(dashboard)/admin/foods-management/categories/_services/useQueries";
+import { useDeleteCategory } from "@/app/(dashboard)/admin/foods-management/categories/_services/use-mutations";
+import { useCategories } from "@/app/(dashboard)/admin/foods-management/categories/_services/use-queries";
 import { Button } from "@/components/ui/button";
 import { alert } from "@/lib/useGlobalStore";
 import { Edit, Trash } from "lucide-react";
