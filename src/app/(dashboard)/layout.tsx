@@ -1,11 +1,29 @@
 "use client";
+import { useSignOut } from "@/app/(auth)/sign-in/_services/use-mutations";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import { customErrorMap } from "@/lib/customErrorMap";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { motion } from "framer-motion";
-import { Apple, ChevronDown, ChevronLeft, Home, Menu } from "lucide-react";
+import {
+  Apple,
+  ChevronDown,
+  ChevronLeft,
+  Home,
+  LogOut,
+  Menu,
+} from "lucide-react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import { z } from "zod";
 
@@ -26,7 +44,7 @@ const routeGroups: RouteGroup[] = [
       {
         href: "/home",
         label: "Home",
-        icon: <Home />,
+        icon: <Home className="mr-2 size-4" />,
       },
     ],
   },
@@ -36,7 +54,7 @@ const routeGroups: RouteGroup[] = [
       {
         href: "/admin/foods-management",
         label: "Foods",
-        icon: <Apple />,
+        icon: <Apple className="mr-2 size-4" />,
       },
     ],
   },
@@ -44,21 +62,66 @@ const routeGroups: RouteGroup[] = [
 
 type LayoutProps = { children: ReactNode };
 const Layout = ({ children }: LayoutProps) => {
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
+  const signOutMutation = useSignOut();
+
+  const handleLogout = () => {
+    signOutMutation.mutate();
+  };
 
   return (
     <div className="flex">
-      <div className="w-screen shadow-sm fixed h-13 bg-background" />
+      <div className="w-screen shadow-sm fixed h-13 bg-background z-10 flex items-center justify-between px-2">
+        <Collapsible.Root className="h-full" open={open} onOpenChange={setOpen}>
+          <Collapsible.Trigger className="m-2" asChild>
+            <Button size="icon" variant="outline">
+              <Menu />
+            </Button>
+          </Collapsible.Trigger>
+        </Collapsible.Root>
+
+        {session && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="flex items-center gap-2 h-9 px-2"
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
+                </Avatar>
+                <span className="hidden md:inline">{session.user?.name}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <div className="px-2 py-1.5 flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium">{session.user?.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {session.user?.email}
+                  </p>
+                </div>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} variant="destructive">
+                <LogOut className="size-4" /> Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+
       <Collapsible.Root
-        className="fixed h-dvh top-0 left-0"
+        className="fixed h-dvh top-0 left-0 z-20"
         open={open}
         onOpenChange={setOpen}
       >
-        <Collapsible.Trigger className="m-2" asChild>
-          <Button size="icon" variant="outline">
-            <Menu />
-          </Button>
-        </Collapsible.Trigger>
         <Collapsible.Content forceMount>
           <div
             className={`w-64 bg-gray-50 h-screen shadow-lg fixed top-0 left-0 p-4 transition-transform duration-300 ${
@@ -66,17 +129,49 @@ const Layout = ({ children }: LayoutProps) => {
             }`}
           >
             <div className="flex justify-between items-center">
-              <h1>Admin Dashboard</h1>
+              <h1 className="font-semibold">Admin Dashboard</h1>
               <Collapsible.Trigger asChild>
                 <Button size="icon" variant="outline">
                   <ChevronLeft />
                 </Button>
               </Collapsible.Trigger>
             </div>
-            <div className="flex flex-col">
+
+            {session && (
+              <div className="my-4">
+                <div className="flex items-center space-x-3 p-2 rounded-md bg-background">
+                  <Avatar>
+                    <AvatarFallback>
+                      <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">{session.user?.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {session.user?.email}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <Separator className="my-2" />
+
+            <div className="flex flex-col mt-4">
               {routeGroups.map((routeGroup) => (
                 <RouteGroup {...routeGroup} key={routeGroup.group} />
               ))}
+            </div>
+
+            <div className="absolute bottom-4 left-0 w-full px-4">
+              <Button
+                variant="outline"
+                className="w-full flex items-center justify-center"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
             </div>
           </div>
         </Collapsible.Content>
@@ -118,12 +213,12 @@ const RouteGroup = ({ group, items }: RouteGroupProps) => {
         >
           {items.map((item) => (
             <Button
-              className="font-normal"
+              className="font-normal justify-start w-full pl-6"
               variant="link"
               asChild
               key={item.href}
             >
-              <Link href={item.href}>
+              <Link href={item.href} className="flex items-center">
                 {item.icon}
                 {item.label}
               </Link>

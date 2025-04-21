@@ -6,7 +6,9 @@ const cn = (...inputs: ClassValue[]) => {
   return twMerge(clsx(inputs));
 };
 
-const toStringSafe = (value: string | number | null | undefined): string => {
+const toStringSafe = (
+  value: string | number | null | undefined | unknown
+): string => {
   return value == null ? "" : String(value);
 };
 

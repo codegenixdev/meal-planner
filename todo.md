@@ -1,8 +1,9 @@
 continue:
 
 accesstypes
-logout
+edit profile
 complete meal form and test the crud (now we have user id)
+better dashboard layout architecture
 
 add client side dashboard
 https://dribbble.com/shots/25289981-Nutrigo-Nutrition-Diet-Dashboard-Figma-Template

@@ -3,7 +3,7 @@ import {
   signInSchema,
   SignInSchema,
 } from "@/app/(auth)/sign-in/_types/signInSchema";
-import { signIn as nextAuthSignIn } from "@/lib/auth";
+import { signIn as nextAuthSignIn, signOut as authSignOut } from "@/lib/auth";
 import { executeAction } from "@/lib/executeAction";
 
 const signIn = async (data: SignInSchema) => {
@@ -15,4 +15,10 @@ const signIn = async (data: SignInSchema) => {
   });
 };
 
-export { signIn };
+const signOut = () => {
+  return executeAction({
+    actionFn: authSignOut,
+  });
+};
+
+export { signIn, signOut };

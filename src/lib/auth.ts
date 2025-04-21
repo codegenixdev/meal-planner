@@ -1,7 +1,25 @@
 import db from "@/lib/db";
-import { comparePassword } from "@/lib/utils";
-import NextAuth from "next-auth";
+import { comparePassword, toNumberSafe, toStringSafe } from "@/lib/utils";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import NextAuth, { DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { JWT } from "next-auth/jwt";
+import { signInSchema } from "@/app/(auth)/sign-in/_types/signInSchema";
+
+declare module "next-auth" {
+  interface User {
+    name?: string | null;
+    role?: string | null;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    name?: string | null;
+    role?: string | null;
+  }
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -15,9 +33,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("Email and password are required");
         }
 
+        const validatedCredentials = signInSchema.parse(credentials);
+
         const user = await db.user.findUnique({
           where: {
-            email: credentials.email,
+            email: validatedCredentials.email,
           },
         });
 
@@ -26,7 +46,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         const isPasswordValid = await comparePassword(
-          credentials.password,
+          validatedCredentials.password,
           user.password
         );
 
@@ -34,8 +54,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("Invalid email or password");
         }
 
-        const { password, ...userWithoutPassword } = user;
-        return userWithoutPassword;
+        return {
+          id: toStringSafe(user.id),
+          email: user.email,
+          name: user.name,
+        };
       },
     }),
   ],
@@ -43,17 +66,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/sign-in",
   },
   callbacks: {
-    session: async ({ session, token }) => {
-      if (session?.user && token?.sub) {
-        session.user.id = token.sub;
-      }
-      return session;
-    },
-    jwt: async ({ token, user }) => {
+    jwt({ token, user }) {
+      const clonedToken = token;
       if (user) {
-        token.sub = user.id.toString();
+        clonedToken.id = toNumberSafe(user.id);
+        clonedToken.name = user?.name;
+        clonedToken.role = user?.role;
       }
-      return token;
+      return clonedToken;
+    },
+    session({ session, token }) {
+      const clonedSession = session;
+
+      if (clonedSession.user) {
+        clonedSession.user.id = toStringSafe(token.id);
+        clonedSession.user.name = token.name;
+        clonedSession.user.role = token.role;
+      }
+
+      return clonedSession;
     },
   },
 });
