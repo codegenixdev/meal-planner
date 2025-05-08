@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const mealFiltersSchema = z.object({
-  dateTime: z.date(),
+  dateTime: z.coerce.date(),
   page: z.number(),
   pageSize: z.number().max(100),
 });

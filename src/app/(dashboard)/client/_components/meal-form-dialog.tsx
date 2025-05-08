@@ -24,17 +24,27 @@ import {
 } from "@/components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useEffect } from "react";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import {
+  FormProvider,
+  SubmitHandler,
+  useForm,
+  useWatch,
+} from "react-hook-form";
 
 type MealFormDialogProps = {
   smallTrigger?: boolean;
 };
 const MealFormDialog = ({ smallTrigger }: MealFormDialogProps) => {
+  const { data: session } = useSession();
+
   const form = useForm<MealSchema>({
     defaultValues: mealDefaultValues,
     resolver: zodResolver(mealSchema),
   });
+
+  const userId = useWatch({ control: form.control, name: "userId" });
 
   const {
     selectedMealId,
@@ -52,6 +62,12 @@ const MealFormDialog = ({ smallTrigger }: MealFormDialogProps) => {
       form.reset(mealQuery.data);
     }
   }, [mealQuery.data, form, selectedMealId]);
+
+  useEffect(() => {
+    if (!userId && session?.user?.id) {
+      form.setValue("userId", session.user.id);
+    }
+  }, [form, session?.user?.id, userId]);
 
   const handleDialogOpenChange = (open: boolean) => {
     updateMealDialogOpen(open);

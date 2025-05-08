@@ -1,8 +1,9 @@
 continue:
 
+finilize the meals page and make uiux better
+then add simple filters for it for by date
+and add a total counter for each days user select
 accesstypes
-edit profile
-complete meal form and test the crud (now we have user id)
 better dashboard layout architecture
 
 add client side dashboard

@@ -5,6 +5,7 @@ import {
   MealFiltersSchema,
 } from "@/app/(dashboard)/client/_types/mealFilterSchema";
 import { MealSchema } from "@/app/(dashboard)/client/_types/mealSchema";
+import { auth } from "@/lib/auth";
 import db from "@/lib/db";
 import { PaginatedResult } from "@/lib/types/paginatedResult";
 import { toStringSafe } from "@/lib/utils";
@@ -12,7 +13,12 @@ import { Prisma } from "@prisma/client";
 
 type MealWithFoods = Prisma.MealGetPayload<{
   include: {
-    mealFoods: true;
+    mealFoods: {
+      include: {
+        food: true;
+        servingUnit: true;
+      };
+    };
   };
 }>;
 
@@ -21,12 +27,20 @@ const getMeals = async (
 ): Promise<PaginatedResult<MealWithFoods>> => {
   const validatedFilters = mealFiltersSchema.parse(filters);
 
+  const session = await auth();
+
   const { dateTime, page = 1, pageSize = 10 } = validatedFilters || {};
 
   const where: Prisma.MealWhereInput = {};
 
   if (dateTime !== undefined) {
-    where.dateTime = dateTime;
+    // where.dateTime = dateTime;
+  }
+
+  if (session?.user?.id) {
+    where.userId = {
+      equals: +session.user.id,
+    };
   }
 
   const skip = (page - 1) * pageSize;
@@ -38,7 +52,14 @@ const getMeals = async (
       orderBy: { dateTime: "desc" },
       skip,
       take: pageSize,
-      include: { mealFoods: true },
+      include: {
+        mealFoods: {
+          include: {
+            food: true,
+            servingUnit: true,
+          },
+        },
+      },
     }),
   ]);
 
