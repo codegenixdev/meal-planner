@@ -1,9 +1,7 @@
 continue:
 
-finilize the meals page and make uiux better
-then add simple filters for it for by date
-and add a total counter for each days user select
-accesstypes
+now handle login by super admin and user sign in process, where to go and
+also check the user logouts correclty and also user cannot access the admin page
 better dashboard layout architecture
 
 add client side dashboard

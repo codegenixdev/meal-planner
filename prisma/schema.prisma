@@ -62,9 +62,15 @@ model User {
   name      String
   email     String   @unique
   password  String
+  role      Role     @default(USER)
   meals     Meal[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 model Meal {

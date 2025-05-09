@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack --port 3005",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
@@ -63,6 +64,7 @@
     "eslint-config-next": "15.3.1",
     "prisma": "^6.6.0",
     "tailwindcss": "^4.1.4",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
 }
