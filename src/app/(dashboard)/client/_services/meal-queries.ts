@@ -7,34 +7,28 @@ import {
 import { MealSchema } from "@/app/(dashboard)/client/_types/mealSchema";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
-import { PaginatedResult } from "@/lib/types/paginatedResult";
 import { toStringSafe } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 
-type MealWithFoods = Prisma.MealGetPayload<{
-  include: {
-    mealFoods: {
-      include: {
-        food: true;
-        servingUnit: true;
-      };
-    };
-  };
-}>;
-
-const getMeals = async (
-  filters: MealFiltersSchema
-): Promise<PaginatedResult<MealWithFoods>> => {
+const getMeals = async (filters: MealFiltersSchema) => {
   const validatedFilters = mealFiltersSchema.parse(filters);
 
   const session = await auth();
 
-  const { dateTime, page = 1, pageSize = 10 } = validatedFilters || {};
+  const { dateTime } = validatedFilters || {};
 
   const where: Prisma.MealWhereInput = {};
 
   if (dateTime !== undefined) {
-    // where.dateTime = dateTime;
+    const startDate = new Date(dateTime);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(dateTime);
+    endDate.setHours(23, 59, 59, 999);
+    where.dateTime = {
+      gte: startDate,
+      lte: endDate,
+    };
   }
 
   if (session?.user?.id) {
@@ -43,33 +37,20 @@ const getMeals = async (
     };
   }
 
-  const skip = (page - 1) * pageSize;
-
-  const [total, data] = await Promise.all([
-    db.meal.count({ where }),
-    db.meal.findMany({
-      where,
-      orderBy: { dateTime: "desc" },
-      skip,
-      take: pageSize,
-      include: {
-        mealFoods: {
-          include: {
-            food: true,
-            servingUnit: true,
-          },
+  const data = await db.meal.findMany({
+    where,
+    orderBy: { dateTime: "desc" },
+    include: {
+      mealFoods: {
+        include: {
+          food: true,
+          servingUnit: true,
         },
       },
-    }),
-  ]);
+    },
+  });
 
-  return {
-    data,
-    total,
-    page,
-    pageSize,
-    totalPages: Math.ceil(total / pageSize),
-  };
+  return data;
 };
 
 const getMeal = async (id: number): Promise<MealSchema | null> => {
