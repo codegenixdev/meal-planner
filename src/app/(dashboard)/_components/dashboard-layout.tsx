@@ -1,5 +1,6 @@
 "use client";
 import { useSignOut } from "@/app/(auth)/sign-in/_services/use-mutations";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,40 +82,43 @@ const DashboardLayout = ({ children, session }: DashboardLayoutProps) => {
             </Button>
           </Collapsible.Trigger>
         </Collapsible.Root>
-        {session && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="flex items-center gap-2 h-9 px-2"
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
-                </Avatar>
-                <span className="hidden md:inline">{session.user?.name}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="px-2 py-1.5 flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">{session.user?.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {session.user?.email}
-                  </p>
+        <div className="flex">
+          <ThemeToggle />
+          {session && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-2 h-9 px-2"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <span className="hidden md:inline">{session.user?.name}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <div className="px-2 py-1.5 flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium">{session.user?.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {session.user?.email}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} variant="destructive">
-                <LogOut className="size-4" /> Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} variant="destructive">
+                  <LogOut className="size-4" /> Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
 
       <Collapsible.Root

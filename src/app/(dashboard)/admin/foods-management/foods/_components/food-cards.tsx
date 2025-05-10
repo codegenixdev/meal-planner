@@ -51,7 +51,7 @@ const FoodCards = () => {
         <div className="grid grid-cols-4 gap-2">
           {foodsQuery.data?.data.map((item) => (
             <div
-              className="shadow-md rounded-lg flex flex-col p-6 gap-3"
+              className="rounded-lg flex flex-col p-6 gap-3 border"
               key={item.id}
             >
               <div className="flex justify-between">

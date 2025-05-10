@@ -1,4 +1,6 @@
 "use client";
+
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { AlertDialogProvider } from "@/components/ui/alert-dialog-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -24,12 +26,18 @@ type ProvidersProps = {
 };
 const Providers = ({ children }: ProvidersProps) => {
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-
-      <Toaster />
-      <AlertDialogProvider />
-    </QueryClientProvider>
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <QueryClientProvider client={queryClient}>
+        <NextThemesProvider>{children}</NextThemesProvider>
+        <Toaster />
+        <AlertDialogProvider />
+      </QueryClientProvider>
+    </NextThemesProvider>
   );
 };
 
