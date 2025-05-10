@@ -1,11 +1,11 @@
 import db from "@/lib/db";
 import { comparePassword, toNumberSafe, toStringSafe } from "@/lib/utils";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import NextAuth, { DefaultSession } from "next-auth";
+import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { JWT } from "next-auth/jwt";
 import { signInSchema } from "@/app/(auth)/sign-in/_types/signInSchema";
+import { JWT } from "next-auth/jwt";
 
 declare module "next-auth" {
   interface User {
@@ -58,6 +58,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id: toStringSafe(user.id),
           email: user.email,
           name: user.name,
+          role: user.role,
         };
       },
     }),
@@ -65,6 +66,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: "/sign-in",
   },
+
   callbacks: {
     jwt({ token, user }) {
       const clonedToken = token;

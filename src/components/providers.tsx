@@ -2,7 +2,6 @@
 import { AlertDialogProvider } from "@/components/ui/alert-dialog-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { SessionProvider } from "next-auth/react";
 import { ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -25,14 +24,12 @@ type ProvidersProps = {
 };
 const Providers = ({ children }: ProvidersProps) => {
   return (
-    <SessionProvider>
-      <QueryClientProvider client={queryClient}>
-        {children}
+    <QueryClientProvider client={queryClient}>
+      {children}
 
-        <Toaster />
-        <AlertDialogProvider />
-      </QueryClientProvider>
-    </SessionProvider>
+      <Toaster />
+      <AlertDialogProvider />
+    </QueryClientProvider>
   );
 };
 

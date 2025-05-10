@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { Session } from "next-auth";
 import { useEffect } from "react";
 import {
   FormProvider,
@@ -35,10 +35,9 @@ import {
 
 type MealFormDialogProps = {
   smallTrigger?: boolean;
+  session: Session;
 };
-const MealFormDialog = ({ smallTrigger }: MealFormDialogProps) => {
-  const { data: session } = useSession();
-
+const MealFormDialog = ({ smallTrigger, session }: MealFormDialogProps) => {
   const form = useForm<MealSchema>({
     defaultValues: mealDefaultValues,
     resolver: zodResolver(mealSchema),

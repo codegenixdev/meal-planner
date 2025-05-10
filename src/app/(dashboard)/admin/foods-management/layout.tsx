@@ -1,6 +1,6 @@
 "use client";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Apple, List, Scale } from "lucide-react";
+import { Apple, Boxes, Ruler } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
@@ -20,7 +20,7 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="max-w-7xl mx-auto p-6">
       <div className="mb-6">
-        <Tabs defaultValue={getDefaultTab()}>
+        <Tabs value={getDefaultTab()}>
           <TabsList>
             <TabsTrigger value="foods" asChild>
               <Link href="/admin/foods-management/foods">
@@ -30,13 +30,13 @@ const Layout = ({ children }: LayoutProps) => {
             </TabsTrigger>
             <TabsTrigger value="categories" asChild>
               <Link href="/admin/foods-management/categories">
-                <List />
+                <Boxes />
                 Categories
               </Link>
             </TabsTrigger>
             <TabsTrigger value="serving-units" asChild>
               <Link href="/admin/foods-management/serving-units">
-                <Scale />
+                <Ruler />
                 Serving Units
               </Link>
             </TabsTrigger>
