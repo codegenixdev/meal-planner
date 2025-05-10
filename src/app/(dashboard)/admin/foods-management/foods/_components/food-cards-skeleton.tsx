@@ -6,7 +6,7 @@ const FoodCardsSkeleton = () => {
   const skeletonCards = Array(12).fill(null);
 
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <>
       {skeletonCards.map((_, index) => (
         <div className="border rounded-lg flex flex-col p-7 gap-3" key={index}>
           <div className="flex justify-between">
@@ -37,7 +37,7 @@ const FoodCardsSkeleton = () => {
           </div>
         </div>
       ))}
-    </div>
+    </>
   );
 };
 

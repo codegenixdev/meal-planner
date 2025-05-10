@@ -1,4 +1,5 @@
 continue:
+fully finish up the admin (refactor and maintain better) then client
 
 better dashboard layout architecture
 
@@ -7,7 +8,7 @@ dialog vertically scrollable if to much content
 dark mode
 develop the landing phase
 sidebar do not show part cannot access
-responsive cards
+refactor
 
 use nextjs loading
 prettier for sorting tailwind
