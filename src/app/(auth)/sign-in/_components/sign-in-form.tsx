@@ -26,7 +26,7 @@ const SignInForm = () => {
   return (
     <FormProvider {...form}>
       <form
-        className="max-w-96 w-full shadow-md rounded-md px-10 py-12 space-y-5"
+        className="max-w-96 w-full border rounded-md px-10 py-12 space-y-5"
         onSubmit={form.handleSubmit(onSubmit)}
       >
         <div className="text-center">

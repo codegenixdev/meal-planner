@@ -74,7 +74,7 @@ const DashboardLayout = ({ children, session }: DashboardLayoutProps) => {
 
   return (
     <div className="flex">
-      <div className="w-screen shadow-sm fixed h-13 bg-background z-10 flex items-center justify-between px-2">
+      <div className="w-screen border fixed h-13 bg-background z-10 flex items-center justify-between px-2">
         <Collapsible.Root className="h-full" open={open} onOpenChange={setOpen}>
           <Collapsible.Trigger className="m-2" asChild>
             <Button size="icon" variant="outline">
@@ -128,7 +128,7 @@ const DashboardLayout = ({ children, session }: DashboardLayoutProps) => {
       >
         <Collapsible.Content forceMount>
           <div
-            className={`w-64 bg-gray-50 h-screen shadow-lg fixed top-0 left-0 p-4 transition-transform duration-300 ${
+            className={`w-64 bg-background h-screen border fixed top-0 left-0 p-4 transition-transform duration-300 ${
               open ? "translate-x-0" : "-translate-x-full"
             }`}
           >
@@ -200,8 +200,8 @@ const RouteGroup = ({ group, items }: RouteGroupProps) => {
                 href={item.href}
                 className={`flex items-center px-5  rounded-md py-1 transition-all ${
                   pathname === item.href
-                    ? "bg-primary/50 hover:bg-primary/60"
-                    : "bg-foreground/5 hover:bg-foreground/10"
+                    ? "bg-foreground/10 hover:bg-foreground/5"
+                    : "hover:bg-foreground/10"
                 }`}
               >
                 {item.icon}

@@ -202,7 +202,7 @@ const MealCards = () => {
 
             return (
               <div
-                className="shadow-md rounded-lg flex flex-col p-6 gap-3 border border-border/40 hover:border-border/80 transition-colors"
+                className="border rounded-lg flex flex-col p-6 gap-3 border border-border/40 hover:border-border/80 transition-colors"
                 key={meal.id}
               >
                 <div className="flex justify-between items-start">

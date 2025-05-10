@@ -25,7 +25,7 @@ const Page = () => {
       <div className="grid grid-cols-4 gap-2">
         {servingUnitsQuery.data?.map((item) => (
           <div
-            className="flex justify-between shadow-md rounded-lg flex-col p-6 gap-3"
+            className="flex justify-between border rounded-lg flex-col p-6 gap-3"
             key={item.id}
           >
             <p className="truncate">{item.name}</p>

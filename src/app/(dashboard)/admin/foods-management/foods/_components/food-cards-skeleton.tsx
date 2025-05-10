@@ -8,10 +8,7 @@ const FoodCardsSkeleton = () => {
   return (
     <div className="grid grid-cols-4 gap-2">
       {skeletonCards.map((_, index) => (
-        <div
-          className="shadow-md rounded-lg flex flex-col p-7 gap-3"
-          key={index}
-        >
+        <div className="border rounded-lg flex flex-col p-7 gap-3" key={index}>
           <div className="flex justify-between">
             <Skeleton className="h-5 w-24" />
             <div className="flex gap-1">
