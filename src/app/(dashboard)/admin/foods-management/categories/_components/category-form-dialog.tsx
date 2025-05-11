@@ -46,6 +46,9 @@ const CategoryFormDialog = ({ smallTrigger }: CategoryFormDialogProps) => {
   const createCategoryMutation = useCreateCategory();
   const updateCategoryMutation = useUpdateCategory();
 
+  const isPending =
+    createCategoryMutation.isPending || updateCategoryMutation.isPending;
+
   useEffect(() => {
     if (!!selectedCategoryId && categoryQuery.data) {
       form.reset(categoryQuery.data);
@@ -74,9 +77,6 @@ const CategoryFormDialog = ({ smallTrigger }: CategoryFormDialogProps) => {
       updateCategoryMutation.mutate(data, { onSuccess: handleSuccess });
     }
   };
-
-  const isPending =
-    createCategoryMutation.isPending || updateCategoryMutation.isPending;
 
   return (
     <Dialog open={categoryDialogOpen} onOpenChange={handleDialogOpenChange}>

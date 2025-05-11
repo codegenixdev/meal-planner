@@ -11,4 +11,3 @@ sidebar do not show part cannot access
 refactor
 
 use nextjs loading
-prettier for sorting tailwind
