@@ -12,7 +12,7 @@ type ConfigType<T> = {
 
 const createStore = <T extends object>(
   storeCreator: StateCreator<T, [["zustand/immer", never]], []>,
-  config?: ConfigType<T>
+  config?: ConfigType<T>,
 ) => {
   const {
     name,
@@ -34,10 +34,10 @@ const createStore = <T extends object>(
       partialize: (state) =>
         Object.fromEntries(
           Object.entries(state).filter(
-            ([key]) => !excludeFromPersist.includes(key as keyof T)
-          )
+            ([key]) => !excludeFromPersist.includes(key as keyof T),
+          ),
         ),
-    })
+    }),
   );
 };
 

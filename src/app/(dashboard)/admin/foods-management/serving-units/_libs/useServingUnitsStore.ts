@@ -27,7 +27,7 @@ const useServingUnitsStore = createStore<Store>(
   }),
   {
     name: "serving-units-store",
-  }
+  },
 );
 
 export { useServingUnitsStore };

@@ -7,7 +7,7 @@ const cn = (...inputs: ClassValue[]) => {
 };
 
 const toStringSafe = (
-  value: string | number | null | undefined | unknown
+  value: string | number | null | undefined | unknown,
 ): string => {
   return value == null ? "" : String(value);
 };

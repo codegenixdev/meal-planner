@@ -107,7 +107,7 @@ const Pagination = ({
                 size: "default",
               }),
               "gap-1 px-2.5 sm:pl-2.5",
-              currentPage === 1 && "pointer-events-none opacity-50"
+              currentPage === 1 && "pointer-events-none opacity-50",
             )}
           >
             <ChevronLeftIcon />
@@ -135,7 +135,7 @@ const Pagination = ({
                   buttonVariants({
                     variant: currentPage === page ? "outline" : "ghost",
                     size: "icon",
-                  })
+                  }),
                 )}
               >
                 {page}
@@ -155,7 +155,7 @@ const Pagination = ({
                 size: "default",
               }),
               "gap-1 px-2.5 sm:pr-2.5",
-              currentPage === totalPages && "pointer-events-none opacity-50"
+              currentPage === totalPages && "pointer-events-none opacity-50",
             )}
           >
             <span className="hidden sm:block">Next</span>

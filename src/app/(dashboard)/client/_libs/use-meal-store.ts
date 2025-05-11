@@ -38,7 +38,7 @@ const useMealsStore = createStore<Store>(
   }),
   {
     name: "meals-store",
-  }
+  },
 );
 
 export { useMealsStore };

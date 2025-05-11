@@ -17,7 +17,7 @@ type FoodWithServingUnits = Prisma.FoodGetPayload<{
 }>;
 
 const getFoods = async (
-  filters: FoodFiltersSchema
+  filters: FoodFiltersSchema,
 ): Promise<PaginatedResult<FoodWithServingUnits>> => {
   const validatedFilters = foodFiltersSchema.parse(filters);
 

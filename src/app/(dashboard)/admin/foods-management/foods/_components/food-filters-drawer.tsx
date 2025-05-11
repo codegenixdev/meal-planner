@@ -49,7 +49,7 @@ const FoodFiltersDrawer = () => {
 
   const areFiltersModified = useMemo(
     () => !equal(foodFilters, foodFiltersDefaultValues),
-    [foodFilters]
+    [foodFilters],
   );
 
   const searchTerm = useWatch({ control: form.control, name: "searchTerm" });
@@ -102,8 +102,8 @@ const FoodFiltersDrawer = () => {
               </DrawerDescription>
             </DrawerHeader>
 
-            <div className="p-4 space-y-2">
-              <div className="flex gap-2 flex-wrap">
+            <div className="space-y-2 p-4">
+              <div className="flex flex-wrap gap-2">
                 <ControlledSelect<FoodFiltersSchema>
                   label="Category"
                   name="categoryId"
@@ -136,7 +136,7 @@ const FoodFiltersDrawer = () => {
                 />
               </div>
 
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex flex-wrap gap-2">
                 <ControlledSlider<FoodFiltersSchema>
                   name="caloriesRange"
                   label="Calories"

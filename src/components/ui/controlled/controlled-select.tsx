@@ -45,14 +45,14 @@ const ControlledSelect = <T extends FieldValues>({
         }) => (
           <>
             <Select onValueChange={onChange} {...restField}>
-              <div className="flex relative">
+              <div className="relative flex">
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={placeholder} />
                 </SelectTrigger>
                 {clearable && !!restField.value && (
                   <Button
                     variant="ghost"
-                    className="absolute right-8 top-1/2 -translate-y-1/2 text-foreground/40 hover:bg-accent/0 size-4"
+                    className="text-foreground/40 hover:bg-accent/0 absolute top-1/2 right-8 size-4 -translate-y-1/2"
                     size="icon"
                     onClick={() => {
                       onChange("");
@@ -75,7 +75,7 @@ const ControlledSelect = <T extends FieldValues>({
             </Select>
 
             {!!error && (
-              <p className="text-sm text-destructive">{error.message}</p>
+              <p className="text-destructive text-sm">{error.message}</p>
             )}
           </>
         )}

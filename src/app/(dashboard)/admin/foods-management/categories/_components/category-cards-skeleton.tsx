@@ -8,7 +8,7 @@ const CategoryCardsSkeleton = () => {
     <>
       {skeletonCards.map((_, index) => (
         <div
-          className="flex justify-between border rounded-lg flex-col p-6 gap-3"
+          className="flex flex-col justify-between gap-3 rounded-lg border p-6"
           key={index}
         >
           <Skeleton className="h-5 w-24" />

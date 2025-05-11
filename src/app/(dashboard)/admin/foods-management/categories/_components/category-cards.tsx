@@ -20,14 +20,14 @@ const CategoryCards = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+    <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
       {categoriesQuery.isLoading ? (
         <CategoryCardsSkeleton />
       ) : (
         <>
           {categoriesQuery.data?.map((item) => (
             <div
-              className="flex justify-between border rounded-lg flex-col p-6 gap-3"
+              className="flex flex-col justify-between gap-3 rounded-lg border p-6"
               key={item.id}
             >
               <p className="truncate">{item.name}</p>

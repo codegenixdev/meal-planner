@@ -16,13 +16,13 @@ const foodSchema = z.intersection(
       z.object({
         foodServingUnitId: requiredStringSchema,
         grams: regexSchema(patterns.zeroTo9999),
-      })
+      }),
     ),
   }),
   z.discriminatedUnion("action", [
     z.object({ action: z.literal("create") }),
     z.object({ action: z.literal("update"), id: z.number() }),
-  ])
+  ]),
 );
 
 type FoodSchema = z.infer<typeof foodSchema>;
@@ -47,7 +47,7 @@ const servingUnitSchema = z.intersection(
   z.discriminatedUnion("action", [
     z.object({ action: z.literal("create") }),
     z.object({ action: z.literal("update"), id: z.number() }),
-  ])
+  ]),
 );
 
 export { foodSchema, servingUnitSchema, foodDefaultValues, type FoodSchema };

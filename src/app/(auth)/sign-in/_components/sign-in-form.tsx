@@ -26,11 +26,11 @@ const SignInForm = () => {
   return (
     <FormProvider {...form}>
       <form
-        className="max-w-96 w-full border rounded-md px-10 py-12 space-y-5"
+        className="w-full max-w-96 space-y-5 rounded-md border px-10 py-12"
         onSubmit={form.handleSubmit(onSubmit)}
       >
         <div className="text-center">
-          <h2 className="text-2xl font-semibold mb-1">Welcome Back</h2>
+          <h2 className="mb-1 text-2xl font-semibold">Welcome Back</h2>
           <p className="text-muted-foreground text-sm">
             Sign in to your account
           </p>
@@ -53,7 +53,7 @@ const SignInForm = () => {
           Don&apos;t have an account?{" "}
           <Link
             href="/sign-up"
-            className="text-primary hover:underline font-medium"
+            className="text-primary font-medium hover:underline"
           >
             Sign up
           </Link>

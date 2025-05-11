@@ -35,7 +35,7 @@ const createFood = async (data: FoodSchema) => {
               grams: toNumberSafe(unit.grams),
             },
           });
-        })
+        }),
       );
     },
   });
@@ -73,7 +73,7 @@ const updateFood = async (data: FoodSchema) => {
                 grams: toNumberSafe(unit.grams),
               },
             });
-          })
+          }),
         );
       }
     },

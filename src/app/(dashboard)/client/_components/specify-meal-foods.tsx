@@ -15,8 +15,8 @@ const SpecifyMealFoods = () => {
   const servingUnitsQuery = useServingUnits();
 
   return (
-    <div className="border p-4 rounded-md flex flex-col gap-4">
-      <div className="flex justify-between items-center">
+    <div className="flex flex-col gap-4 rounded-md border p-4">
+      <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Foods</h3>
         <Button
           size="sm"
@@ -32,8 +32,8 @@ const SpecifyMealFoods = () => {
       </div>
 
       {mealFoods.fields.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground border border-dashed rounded-md">
-          <UtensilsCrossed className="size-10 mb-2 opacity-50" />
+        <div className="text-muted-foreground flex flex-col items-center justify-center rounded-md border border-dashed py-6 text-center">
+          <UtensilsCrossed className="mb-2 size-10 opacity-50" />
           <p>No foods added to this meal yet</p>
           <p className="text-sm">
             Add foods to track what you&apos;re eating in this meal
@@ -43,7 +43,7 @@ const SpecifyMealFoods = () => {
         <div className="space-y-3">
           {mealFoods.fields.map((field, index) => (
             <div
-              className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end"
+              className="grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-3"
               key={field.id}
             >
               <div>

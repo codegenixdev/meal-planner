@@ -4,7 +4,7 @@ import { CategoryFormDialog } from "@/app/(dashboard)/admin/foods-management/cat
 const Page = () => {
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-semibold">Categories List</h1>
         <CategoryFormDialog />
       </div>

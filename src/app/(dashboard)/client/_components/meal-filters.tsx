@@ -26,7 +26,7 @@ const MealFilters = () => {
     <FormProvider {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="flex items-center gap-3 mb-4"
+        className="mb-4 flex items-center gap-3"
       >
         <ControlledDatePicker<MealFiltersSchema>
           name="dateTime"

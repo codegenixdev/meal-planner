@@ -7,7 +7,7 @@ const servingUnitSchema = z.intersection(
   z.discriminatedUnion("action", [
     z.object({ action: z.literal("create") }),
     z.object({ action: z.literal("update"), id: z.number().min(1) }),
-  ])
+  ]),
 );
 
 type ServingUnitSchema = z.infer<typeof servingUnitSchema>;

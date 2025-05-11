@@ -30,14 +30,14 @@ const FoodCards = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-2">
+      <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-4">
         {foodsQuery.isLoading ? (
           <FoodCardsSkeleton />
         ) : (
           <>
             {foodsQuery.data?.data.map((item) => (
               <div
-                className="rounded-lg flex flex-col p-6 gap-3 border"
+                className="flex flex-col gap-3 rounded-lg border p-6"
                 key={item.id}
               >
                 <div className="flex justify-between">
@@ -71,13 +71,13 @@ const FoodCards = () => {
                 <Separator />
                 <div className="grid grid-cols-2 gap-5">
                   <div>
-                    <p className="text-foreground/60 font-normal text-sm">
+                    <p className="text-foreground/60 text-sm font-normal">
                       Calories
                     </p>
                     <p className="text-sm font-medium">{item.calories} kcal</p>
                   </div>
                   <div>
-                    <p className="text-foreground/60 font-normal text-sm">
+                    <p className="text-foreground/60 text-sm font-normal">
                       Carbohydrates
                     </p>
                     <p className="text-sm font-medium">
@@ -85,13 +85,13 @@ const FoodCards = () => {
                     </p>
                   </div>
                   <div>
-                    <p className="text-foreground/60 font-normal text-sm">
+                    <p className="text-foreground/60 text-sm font-normal">
                       Protein
                     </p>
                     <p className="text-sm font-medium">{item.protein} g</p>
                   </div>
                   <div>
-                    <p className="text-foreground/60 font-normal text-sm">
+                    <p className="text-foreground/60 text-sm font-normal">
                       Fat
                     </p>
                     <p className="text-sm font-medium">{item.fat} g</p>

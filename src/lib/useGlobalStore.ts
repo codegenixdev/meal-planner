@@ -41,7 +41,7 @@ const useGlobalStore = createStore<Store>(
   {
     name: "global-store",
     excludeFromPersist: ["alertOpen"],
-  }
+  },
 );
 
 const alert = (config: AlertConfig) => {

@@ -30,7 +30,7 @@ const createMeal = async (data: MealSchema) => {
               servingUnitId: toNumberSafe(food.servingUnitId),
             },
           });
-        })
+        }),
       );
     },
   });
@@ -62,7 +62,7 @@ const updateMeal = async (data: MealSchema) => {
                 amount: toNumberSafe(food.amount),
               },
             });
-          })
+          }),
         );
       }
     },

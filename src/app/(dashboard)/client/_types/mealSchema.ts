@@ -11,13 +11,13 @@ const mealSchema = z.intersection(
         foodId: requiredStringSchema,
         servingUnitId: requiredStringSchema,
         amount: regexSchema(patterns.zeroTo9999),
-      })
+      }),
     ),
   }),
   z.discriminatedUnion("action", [
     z.object({ action: z.literal("create") }),
     z.object({ action: z.literal("update"), id: z.number() }),
-  ])
+  ]),
 );
 
 type MealSchema = z.infer<typeof mealSchema>;

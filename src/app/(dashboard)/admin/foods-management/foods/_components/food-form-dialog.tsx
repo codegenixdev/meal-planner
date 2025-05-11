@@ -110,7 +110,7 @@ const FoodFormDialog = () => {
         >
           <FormProvider {...form}>
             <div className="grid grid-cols-2 gap-4">
-              <div className="grid col-span-1">
+              <div className="col-span-1 grid">
                 <ControlledInput<FoodSchema>
                   name="name"
                   label="Name"

@@ -8,7 +8,7 @@ const Layout = async ({ children }: LayoutProps) => {
   const session = await auth();
   if (!session) redirect("/sign-in");
   if (session.user?.role === Role.USER) redirect("/client");
-  return <div className="max-w-7xl mx-auto p-6">{children}</div>;
+  return <div className="mx-auto max-w-7xl p-6">{children}</div>;
 };
 
 export default Layout;

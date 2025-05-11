@@ -18,7 +18,7 @@ type Actions = {
   updateFoodFiltersDrawerOpen: (is: State["foodFiltersDrawerOpen"]) => void;
   updateFoodFiltersPage: (action: "next" | "prev" | number) => void;
   updateFoodFiltersSearchTerm: (
-    str: State["foodFilters"]["searchTerm"]
+    str: State["foodFilters"]["searchTerm"],
   ) => void;
 };
 
@@ -74,7 +74,7 @@ const useFoodsStore = createStore<Store>(
   {
     name: "foods-store",
     excludeFromPersist: ["foodFilters"],
-  }
+  },
 );
 
 export { useFoodsStore };

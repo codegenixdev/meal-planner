@@ -45,7 +45,7 @@ const ControlledDatePicker = <T extends FieldValues>({
                 variant={"outline"}
                 className={cn(
                   "w-[280px] justify-start text-left font-normal",
-                  !value && "text-muted-foreground"
+                  !value && "text-muted-foreground",
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
@@ -53,7 +53,7 @@ const ControlledDatePicker = <T extends FieldValues>({
               </Button>
             </PopoverTrigger>
             {!!error && (
-              <p className="text-sm text-destructive">{error.message}</p>
+              <p className="text-destructive text-sm">{error.message}</p>
             )}
           </div>
           <PopoverContent className="w-auto p-0">

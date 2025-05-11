@@ -9,7 +9,7 @@ const Layout = async ({ children }: LayoutProps) => {
   if (!session) redirect("/sign-in");
   if (session.user?.role === Role.ADMIN)
     redirect("/admin/foods-management/foods");
-  return <div className="max-w-7xl mx-auto p-6">{children}</div>;
+  return <div className="mx-auto max-w-7xl p-6">{children}</div>;
 };
 
 export default Layout;

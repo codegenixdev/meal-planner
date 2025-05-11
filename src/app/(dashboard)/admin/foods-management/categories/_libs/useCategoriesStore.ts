@@ -27,7 +27,7 @@ const useCategoriesStore = createStore<Store>(
   }),
   {
     name: "categories-store",
-  }
+  },
 );
 
 export { useCategoriesStore };

@@ -32,8 +32,8 @@ function ControlledSlider<T extends FieldValues>({
         const values = Array.isArray(field.value)
           ? field.value
           : Array.isArray(defaultValue)
-          ? defaultValue
-          : [min, max];
+            ? defaultValue
+            : [min, max];
 
         const handleValueChange = (newValues: number[]) => {
           if (minStepsBetweenThumbs > 1 && newValues.length > 1) {
@@ -47,10 +47,10 @@ function ControlledSlider<T extends FieldValues>({
         };
 
         return (
-          <div className="grid gap-4 p-4 w-full border border-[#14424C]/20 rounded-md">
-            <div className="flex justify-between items-center">
+          <div className="grid w-full gap-4 rounded-md border border-[#14424C]/20 p-4">
+            <div className="flex items-center justify-between">
               {label && (
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <label className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   {label}
                 </label>
               )}
@@ -64,20 +64,20 @@ function ControlledSlider<T extends FieldValues>({
               onValueChange={handleValueChange}
               className={cn(
                 "relative flex w-full touch-none items-center select-none data-[disabled]:opacity-50 data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-44 data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col",
-                className
+                className,
               )}
               {...props}
             >
               <SliderPrimitive.Track
                 data-slot="slider-track"
                 className={cn(
-                  "cursor-pointer bg-muted relative grow overflow-hidden rounded-full data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5"
+                  "bg-muted relative grow cursor-pointer overflow-hidden rounded-full data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5",
                 )}
               >
                 <SliderPrimitive.Range
                   data-slot="slider-range"
                   className={cn(
-                    "cursor-pointer bg-primary absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full"
+                    "bg-primary absolute cursor-pointer data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full",
                   )}
                 />
               </SliderPrimitive.Track>
@@ -85,17 +85,17 @@ function ControlledSlider<T extends FieldValues>({
                 <SliderPrimitive.Thumb
                   data-slot="slider-thumb"
                   key={index}
-                  className="cursor-pointer border-primary bg-background ring-ring/50 block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
+                  className="border-primary bg-background ring-ring/50 block size-4 shrink-0 cursor-pointer rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
                 />
               ))}
             </SliderPrimitive.Root>
 
-            <div className="flex gap-2 flex-wrap">
-              <ol className="flex items-center w-full gap-3">
+            <div className="flex flex-wrap gap-2">
+              <ol className="flex w-full items-center gap-3">
                 {values.map((singleValue, index) => (
                   <li
                     key={index}
-                    className="flex items-center justify-between w-full border px-3 h-10 rounded-md"
+                    className="flex h-10 w-full items-center justify-between rounded-md border px-3"
                   >
                     <span>{index === 0 ? "Min" : "Max"}</span>
                     <span>{singleValue.toLocaleString()}</span>

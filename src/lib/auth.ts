@@ -47,7 +47,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const isPasswordValid = await comparePassword(
           validatedCredentials.password,
-          user.password
+          user.password,
         );
 
         if (!isPasswordValid) {

@@ -5,7 +5,7 @@ import { FoodFormDialog } from "@/app/(dashboard)/admin/foods-management/foods/_
 const Page = () => {
   return (
     <div className="space-y-2">
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-semibold">Foods List</h1>
         <FoodFormDialog />
       </div>

@@ -49,7 +49,7 @@ const MealCards = () => {
           });
           return totals;
         },
-        { calories: 0, protein: 0, carbs: 0, fat: 0, sugar: 0, fiber: 0 }
+        { calories: 0, protein: 0, carbs: 0, fat: 0, sugar: 0, fiber: 0 },
       ) || { calories: 0, protein: 0, carbs: 0, fat: 0, sugar: 0, fiber: 0 }
     );
   };
@@ -69,7 +69,7 @@ const MealCards = () => {
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <CalendarX className="text-primary mb-2" />
         <h3 className="text-lg font-medium">No meals found</h3>
-        <p className="text-sm text-foreground/60 mt-1">
+        <p className="text-foreground/60 mt-1 text-sm">
           Try adjusting your filters or add new meals
         </p>
         <Button
@@ -88,14 +88,14 @@ const MealCards = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold mb-4">{displayDate}</h2>
+        <h2 className="mb-4 text-2xl font-bold">{displayDate}</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {/* Total Calories Card */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center">
-                <Flame className="mr-2 h-4 w-4 text-primary" />
+              <CardTitle className="flex items-center text-sm font-medium">
+                <Flame className="text-primary mr-2 h-4 w-4" />
                 Total Calories
               </CardTitle>
             </CardHeader>
@@ -109,23 +109,23 @@ const MealCards = () => {
           {/* Macronutrients Card */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center">
-                <PieChart className="mr-2 h-4 w-4 text-primary" />
+              <CardTitle className="flex items-center text-sm font-medium">
+                <PieChart className="text-primary mr-2 h-4 w-4" />
                 Macronutrients
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <p className="text-xs text-muted-foreground">Protein</p>
+                  <p className="text-muted-foreground text-xs">Protein</p>
                   <p className="font-medium">{nutritionTotals.protein}g</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Carbs</p>
+                  <p className="text-muted-foreground text-xs">Carbs</p>
                   <p className="font-medium">{nutritionTotals.carbs}g</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Fat</p>
+                  <p className="text-muted-foreground text-xs">Fat</p>
                   <p className="font-medium">{nutritionTotals.fat}g</p>
                 </div>
               </div>
@@ -135,8 +135,8 @@ const MealCards = () => {
           {/* Meal Summary Card */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center">
-                <Utensils className="mr-2 h-4 w-4 text-primary" />
+              <CardTitle className="flex items-center text-sm font-medium">
+                <Utensils className="text-primary mr-2 h-4 w-4" />
                 Meal Summary
               </CardTitle>
             </CardHeader>
@@ -153,7 +153,7 @@ const MealCards = () => {
                   <span className="font-medium">
                     {mealsQuery.data?.reduce(
                       (total, meal) => total + meal.mealFoods.length,
-                      0
+                      0,
                     ) || 0}
                   </span>
                 </div>
@@ -172,19 +172,19 @@ const MealCards = () => {
           {/* Additional Nutrients Card */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center">
-                <LineChart className="mr-2 h-4 w-4 text-primary" />
+              <CardTitle className="flex items-center text-sm font-medium">
+                <LineChart className="text-primary mr-2 h-4 w-4" />
                 Additional Nutrients
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-y-2 gap-x-4">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                 <div>
-                  <p className="text-xs text-muted-foreground">Fiber</p>
+                  <p className="text-muted-foreground text-xs">Fiber</p>
                   <p className="font-medium">{nutritionTotals.fiber}g</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Sugar</p>
+                  <p className="text-muted-foreground text-xs">Sugar</p>
                   <p className="font-medium">{nutritionTotals.sugar}g</p>
                 </div>
               </div>
@@ -195,17 +195,17 @@ const MealCards = () => {
 
       {/* Meal Cards Section */}
       <div>
-        <h3 className="text-lg font-medium mb-4">Meals</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <h3 className="mb-4 text-lg font-medium">Meals</h3>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {mealsQuery.data?.map((meal) => {
             const totalCalories = calculateTotalCalories(meal.mealFoods);
 
             return (
               <div
-                className="border rounded-lg flex flex-col p-6 gap-3 border border-border/40 hover:border-border/80 transition-colors"
+                className="border-border/40 hover:border-border/80 flex flex-col gap-3 rounded-lg border p-6 transition-colors"
                 key={meal.id}
               >
-                <div className="flex justify-between items-start">
+                <div className="flex items-start justify-between">
                   <div>
                     <p className="font-medium">
                       {format(new Date(meal.dateTime), "PPp")}
@@ -248,15 +248,15 @@ const MealCards = () => {
 
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <Utensils className="size-4 text-primary" />
-                    <p className="text-foreground/70 font-medium text-sm">
+                    <Utensils className="text-primary size-4" />
+                    <p className="text-foreground/70 text-sm font-medium">
                       {meal.mealFoods.length}{" "}
                       {meal.mealFoods.length === 1 ? "item" : "items"}
                     </p>
                   </div>
 
                   {meal.mealFoods.length === 0 ? (
-                    <p className="text-sm italic text-foreground/60">
+                    <p className="text-foreground/60 text-sm italic">
                       No foods added
                     </p>
                   ) : (
@@ -266,7 +266,7 @@ const MealCards = () => {
                           key={mealFood.id}
                           className="bg-muted/40 rounded-md p-3"
                         >
-                          <div className="flex justify-between items-start">
+                          <div className="flex items-start justify-between">
                             <p className="font-medium">{mealFood.food.name}</p>
                             <Badge variant="secondary">
                               {(mealFood.food.calories ?? 0) *
@@ -275,7 +275,7 @@ const MealCards = () => {
                             </Badge>
                           </div>
 
-                          <div className="flex justify-between mt-2 text-sm text-foreground/70">
+                          <div className="text-foreground/70 mt-2 flex justify-between text-sm">
                             <div>
                               <span>Serving: </span>
                               <span className="font-medium">
@@ -286,7 +286,7 @@ const MealCards = () => {
                               </span>
                             </div>
 
-                            <div className="text-xs space-x-1">
+                            <div className="space-x-1 text-xs">
                               <span>P: {mealFood.food.protein}g</span>
                               <span>C: {mealFood.food.carbohydrates}g</span>
                               <span>F: {mealFood.food.fat}g</span>
