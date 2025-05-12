@@ -589,3 +589,24 @@ export { ThemeToggle };
 
 
 ```
+
+```admin/layout.tsx
+
+import { ReactNode } from "react";
+
+type LayoutProps = {
+  children: ReactNode;
+};
+const Layout = ({ children }: LayoutProps) => {
+  return <>{children}</>;
+};
+
+export default Layout;
+
+```
+
+mode `admin/page` to `admin/foods-management/categories/page.tsx`
+
+show sidebar
+
+continue: implement categories
