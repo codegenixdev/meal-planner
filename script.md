@@ -178,4 +178,414 @@ it won't let us
 
 `npx prisma db push --force-reset`
 
-continue: create category then serving unit the foods
+show that easily access db
+
+`npx shadcn@latest init (slate)`
+`npx shadcn@latest add button`
+`npx shadcn@latest add dropdown-menu`
+`npm install @radix-ui/react-collapsible`
+
+```(dashboard)/admin/page.ts
+
+const Page = () => {
+  return <>admin</>;
+};
+
+export default Page;
+```
+
+```(dashboard)/layout.tsx
+
+import { ReactNode } from "react";
+
+type LayoutProps = {
+  children: ReactNode;
+};
+const Layout = ({ children }: LayoutProps) => {
+  return <>{children}</>;
+};
+
+export default Layout;
+```
+
+```(dashboard)/_components/dashboard-layout.tsx
+
+"use client";
+import { ReactNode, useState } from "react";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
+
+type DashboardLayoutProps = { children: ReactNode };
+
+const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="flex">
+      <Collapsible.Root open={open} onOpenChange={setOpen}>
+        <Collapsible.Trigger asChild>
+          <Button size="icon" variant="outline">
+            <Menu />
+          </Button>
+        </Collapsible.Trigger>
+      </Collapsible.Root>
+
+      <Collapsible.Root open={open} onOpenChange={setOpen}>
+        <Collapsible.Content>content</Collapsible.Content>
+      </Collapsible.Root>
+
+      {children}
+    </div>
+  );
+};
+
+export { DashboardLayout };
+
+```
+
+```(dashboard)/layout.tsx
+
+const Layout = ({ children }: LayoutProps) => {
+  return <DashboardLayout>{children}</DashboardLayout>;
+};
+```
+
+show
+
+```dashboard-layout.tsx
+
+      <Collapsible.Root open={open} onOpenChange={setOpen}>
+        <Collapsible.Trigger asChild>
+          <Button size="icon" variant="outline">
+            <Menu />
+          </Button>
+        </Collapsible.Trigger>
+      </Collapsible.Root>
+
+      <Collapsible.Root open={open} onOpenChange={setOpen}>
+        <Collapsible.Content>
+          <div className="bg-background fixed top-0 left-0 h-screen w-64 border p-4">
+            <div className="flex items-center justify-between">
+              <h1 className="font-semibold">Admin Dashboard</h1>
+              <Collapsible.Trigger asChild>
+                <Button size="icon" variant="outline">
+                  <ChevronLeft />
+                </Button>
+              </Collapsible.Trigger>
+            </div>
+          </div>
+        </Collapsible.Content>
+      </Collapsible.Root>
+```
+
+show
+
+```
+
+      <Collapsible.Root
+        className="fixed top-0 left-0 z-20 h-dvh"
+       open={open} onOpenChange={setOpen}>
+        <Collapsible.Content>
+          <div
+            className={`bg-background fixed top-0 left-0 h-screen w-64 border p-4 transition-transform duration-300 ${
+              open ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <h1 className="font-semibold">Admin Dashboard</h1>
+              <Collapsible.Trigger asChild>
+                <Button size="icon" variant="outline">
+                  <ChevronLeft />
+                </Button>
+              </Collapsible.Trigger>
+            </div>
+          </div>
+        </Collapsible.Content>
+      </Collapsible.Root>
+
+```
+
+show animation not work, then add forceMount
+
+```
+<Collapsible.Content forceMount>
+```
+
+```
+<main
+  className={`transition-margin mt-13 flex-1 p-4 duration-300 ${
+    open ? "ml-64" : "ml-0"
+  }`}
+>
+  {children}
+</main>
+```
+
+`npx shadcn@latest add separator`
+
+```
+      <div className="flex items-center justify-between">
+        <h1 className="font-semibold">Admin Dashboard</h1>
+        <Collapsible.Trigger asChild>
+          <Button size="icon" variant="outline">
+            <ChevronLeft />
+          </Button>
+        </Collapsible.Trigger>
+      </div>
+      <Separator className="my-2" />
+      <div className="mt-4 flex flex-col">
+        <p>Route 1</p>
+        <p>Route 2</p>
+      </div>
+```
+
+top
+
+```
+type RouteGroupType = {
+  group: string;
+  items: {
+    href: string;
+    label: string;
+    icon: ReactNode;
+  }[];
+};
+
+const ROUTE_GROUPS: RouteGroupType[] = [
+  {
+    group: "Foods Management",
+    items: [
+      {
+        href: "/admin/foods-management/foods",
+        label: "Foods",
+        icon: <Apple className="mr-2 size-3" />,
+      },
+      {
+        href: "/admin/foods-management/categories",
+        label: "Categories",
+        icon: <Boxes className="mr-2 size-3" />,
+      },
+      {
+        href: "/admin/foods-management/serving-units",
+        label: "Serving Units",
+        icon: <Ruler className="mr-2 size-3" />,
+      },
+    ],
+  },
+  {
+    group: "Meals Management",
+    items: [
+      {
+        href: "/client",
+        label: "Meals",
+        icon: <Utensils className="mr-2 size-3" />,
+      },
+    ],
+  },
+];
+```
+
+```
+
+type RouteGroupProps = RouteGroupType;
+const RouteGroup = ({ group, items }: RouteGroupProps) => {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  return (
+    <Collapsible.Root open={open} onOpenChange={setOpen}>
+      <Collapsible.Trigger asChild>
+        <Button
+          className="text-foreground/80 flex w-full justify-between font-normal"
+          variant="ghost"
+        >
+          {group}
+          <div className={`transition-transform ${open ? "rotate-180" : ""}`}>
+            <ChevronDown />
+          </div>
+        </Button>
+      </Collapsible.Trigger>
+      <Collapsible.Content forceMount>
+        <motion.div
+          className={`flex flex-col gap-2 ${
+            !open ? "pointer-events-none" : ""
+          }`}
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+        >
+          {items.map((item) => (
+            <Button
+              className="w-full justify-start font-normal"
+              variant="link"
+              asChild
+              key={item.href}
+            >
+              <Link
+                href={item.href}
+                className={`flex items-center rounded-md px-5 py-1 transition-all ${
+                  pathname === item.href
+                    ? "bg-foreground/10 hover:bg-foreground/5"
+                    : "hover:bg-foreground/10"
+                }`}
+              >
+                {item.icon}
+                <span className="text-sm">{item.label}</span>
+              </Link>
+            </Button>
+          ))}
+        </motion.div>
+      </Collapsible.Content>
+    </Collapsible.Root>
+  );
+};
+
+```
+
+```
+<div className="mt-4 flex flex-col">
+  {ROUTE_GROUPS.map((routeGroup) => (
+    <RouteGroup {...routeGroup} key={routeGroup.group} />
+  ))}
+</div>
+```
+
+`npx shadcn@latest add avatar`
+
+```
+  <div className="bg-background fixed z-10 flex h-13 w-screen items-center justify-between border px-2">
+    <Collapsible.Root className="h-full" open={open} onOpenChange={setOpen}>
+      <Collapsible.Trigger className="m-2" asChild>
+        <Button size="icon" variant="outline">
+          <Menu />
+        </Button>
+      </Collapsible.Trigger>
+    </Collapsible.Root>
+    <div className="flex">
+      <ThemeToggle />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="flex h-9 items-center gap-2 px-2"
+          >
+            <Avatar className="size-8">
+              <AvatarFallback>A</AvatarFallback>
+            </Avatar>
+            <span className="hidden md:inline">Admin</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <div className="flex items-center gap-3 px-2 py-1.5">
+            <Avatar className="size-10">
+              <AvatarFallback>A</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm font-medium">Admin</p>
+              <p className="text-muted-foreground text-xs">
+                admin@test.com
+              </p>
+            </div>
+          </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => {
+              // logout login
+            }}
+            variant="destructive"
+          >
+            <LogOut className="size-4" /> Logout
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  </div>
+```
+
+`npm i next-themes`
+
+```components/provider.tsx
+"use client";
+
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { ReactNode } from "react";
+
+type ProvidersProps = {
+  children: ReactNode;
+};
+const Providers = ({ children }: ProvidersProps) => {
+  return (
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      {children}
+    </NextThemesProvider>
+  );
+};
+
+export { Providers };
+
+
+```
+
+```root layout
+<Providers>
+{children}
+</Providers>
+```
+
+and also suppressHydrationWarning on html
+
+```components/theme-toggle.tsx
+
+"use client";
+
+import * as React from "react";
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const ThemeToggle = () => {
+  const { setTheme } = useTheme();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon">
+          <Sun className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+          <Moon className="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => setTheme("light")}>
+          Light
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
+          Dark
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")}>
+          System
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+export { ThemeToggle };
+
+
+```
