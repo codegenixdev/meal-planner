@@ -9,6 +9,8 @@ install prisma extension
 `npx prisma migrate dev` (add @prisma/client package and prisma generate for types for prisma client)
 add generated/prisma folder to gitignore
 
+remove env from gitignore
+
 ```
 model User {
   id    Int    @id @default(autoincrement())
@@ -609,4 +611,524 @@ mode `admin/page` to `admin/foods-management/categories/page.tsx`
 
 show sidebar
 
-continue: implement categories
+```categories/_services/category-queries.ts
+
+"use client";
+import db from "@/lib/db";
+
+const getCategories = async () => {
+  return await db.category.findMany();
+};
+
+export { getCategories };
+
+```
+
+`npm i @tanstack/react-query`
+
+```components/providers.tsx
+
+"use client";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { ReactNode } from "react";
+
+type ProvidersProps = {
+  children: ReactNode;
+};
+
+const queryClient = new QueryClient();
+
+const Providers = ({ children }: ProvidersProps) => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <NextThemesProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        {children}
+      </NextThemesProvider>
+    </QueryClientProvider>
+  );
+};
+
+export { Providers };
+
+```
+
+```categories/_services/use-category-queries.ts
+import { getCategories } from "@/app/(dashboard)/admin/foods-management/categories/_services/queries";
+import { useQuery } from "@tanstack/react-query";
+
+const useCategories = () => {
+  return useQuery({
+    queryKey: ["categories"],
+    queryFn: getCategories,
+  });
+};
+
+export { useCategories };
+```
+
+`npm i zod zod-validation-error next-auth`
+
+```lib/getErrorMessage
+
+import { Prisma } from "@prisma/client";
+import { fromError } from "zod-validation-error";
+
+import { ZodError } from "zod";
+import { AuthError } from "next-auth";
+
+const PRISMA_ERROR_CODES = new Map<string, string>([
+  [
+    "P2000",
+    "The provided value for the column is too long for the column's type",
+  ],
+  ["P2001", "The record searched for in the where condition does not exist"],
+  ["P2002", "Unique constraint failed"],
+  ["P2003", "Foreign key constraint failed"],
+  ["P2004", "A constraint failed on the database"],
+  [
+    "P2005",
+    "The value stored in the database for the field is invalid for the field's type",
+  ],
+  ["P2006", "The provided value for the field is not valid"],
+  ["P2007", "Data validation error"],
+  ["P2008", "Failed to parse the query"],
+  ["P2009", "Failed to validate the query"],
+  ["P2010", "Raw query failed"],
+  ["P2011", "Null constraint violation"],
+  ["P2012", "Missing a required value"],
+  ["P2013", "Missing a required argument"],
+  [
+    "P2014",
+    "The change you are trying to make would violate the required relation",
+  ],
+  ["P2015", "A related record could not be found"],
+  ["P2016", "Query interpretation error"],
+  [
+    "P2017",
+    "The records for relation between the parent and child models are not connected",
+  ],
+  ["P2018", "The required connected records were not found"],
+  ["P2019", "Input error"],
+  ["P2020", "Value out of range for the type"],
+  ["P2021", "The table does not exist in the current database"],
+  ["P2022", "The column does not exist in the current database"],
+  ["P2023", "Inconsistent column data"],
+  ["P2024", "Timed out fetching a new connection from the pool"],
+  [
+    "P2025",
+    "An operation failed because it depends on one or more records that were required but not found",
+  ],
+  [
+    "P2026",
+    "The current database provider doesn't support a feature that the query used",
+  ],
+  ["P2027", "Multiple errors occurred on the database during query execution"],
+]);
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof AuthError) {
+    return "Wrong credentials or the user did not found.";
+  } else if (error instanceof ZodError) {
+    const message = fromError(error);
+    if (message) {
+      return message.toString();
+    }
+  }
+
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    const errorCode = error.code;
+    const message = PRISMA_ERROR_CODES.get(errorCode);
+
+    if (message) {
+      return message;
+    }
+
+    if (errorCode === "P2002") {
+      const field = (error.meta?.target as string[])?.[0] || "field";
+      return `A record with this ${field} already exists.`;
+    }
+  }
+
+  if (error instanceof Prisma.PrismaClientValidationError) {
+    return "Invalid data provided.";
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "An unexpected error occurred.";
+};
+
+export { getErrorMessage };
+
+
+```
+
+```lib/executeAction.ts
+import { getErrorMessage } from "@/lib/getErrorMessage";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
+
+type Options<T> = {
+  actionFn: () => Promise<T>;
+};
+const executeAction = async <T>({ actionFn }: Options<T>) => {
+  try {
+    await actionFn();
+  } catch (error) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
+    throw new Error(getErrorMessage(error));
+  }
+};
+
+export { executeAction };
+
+```
+
+```categories/_services/category-mutations.ts
+"use client";
+import db from "@/lib/db";
+import { executeAction } from "@/lib/executeAction";
+
+const deleteCategory = async (id: number) => {
+  await executeAction({
+    actionFn: () => db.category.delete({ where: { id } }),
+  });
+};
+
+export { deleteCategory };
+```
+
+```categories/_services/use-category-mutations.ts
+const useDeleteCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await deleteCategory(id);
+    },
+    onSuccess: () => {
+      toast.success("Category deleted successfully.");
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+};
+```
+
+`npx shadcn@latest add sonner`
+
+add <Toaster /> to providers (inside themes provider)
+
+```categories/_components/category-cards.tsx
+
+"use client";
+import { useDeleteCategory } from "@/app/(dashboard)/admin/foods-management/categories/_services/use-category-mutations";
+import { useCategories } from "@/app/(dashboard)/admin/foods-management/categories/_services/use-category-queries";
+import { Button } from "@/components/ui/button";
+import { Edit, Trash } from "lucide-react";
+
+const CategoryCards = () => {
+  const categoriesQuery = useCategories();
+  const deleteCategoryMutation = useDeleteCategory();
+
+  return (
+    <div className="grid grid-cols-4 gap-2">
+      {categoriesQuery.data?.map((item) => (
+        <div
+          className="flex justify-between shadow-md rounded-lg flex-col p-6 gap-3"
+          key={item.id}
+        >
+          <p className="truncate">{item.name}</p>
+          <div className="flex gap-1">
+            <Button
+              className="size-6"
+              variant="ghost"
+              size="icon"
+              onClick={() => {}}
+            >
+              <Edit />
+            </Button>
+            <Button
+              className="size-6"
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                deleteCategoryMutation.mutate(item.id);
+              }}
+            >
+              <Trash />
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export { CategoryCards };
+
+```
+
+```categories/page.tsx
+
+import { CategoryCards } from "@/app/(dashboard)/admin/foods-management/categories/_components/category-cards";
+
+const Page = () => {
+  return <CategoryCards />;
+};
+
+export default Page;
+
+
+```
+
+add something to db by studio, see lists works and item deletes
+now add alert
+
+`npx shadcn@latest add alert-dialog`
+
+`npm i zustand immer`
+
+```lib/createStore/ts
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
+import { StateCreator } from "zustand/vanilla";
+
+type ConfigType<T> = {
+  name?: string;
+  storage?: Storage;
+  skipPersist?: boolean;
+  excludeFromPersist?: Array<keyof T>;
+};
+
+const createStore = <T extends object>(
+  storeCreator: StateCreator<T, [["zustand/immer", never]], []>,
+  config?: ConfigType<T>
+) => {
+  const {
+    name,
+    storage,
+    skipPersist = false,
+    excludeFromPersist = [] as Array<keyof T>,
+  } = config || {};
+
+  const immerStore = immer(storeCreator);
+
+  if (skipPersist) {
+    return create<T>()(immerStore);
+  }
+
+  return create<T>()(
+    persist(immerStore, {
+      name: name || "zustand-store",
+      storage: createJSONStorage(() => storage || localStorage),
+      partialize: (state) =>
+        Object.fromEntries(
+          Object.entries(state).filter(
+            ([key]) => !excludeFromPersist.includes(key as keyof T)
+          )
+        ),
+    })
+  );
+};
+
+export { createStore };
+
+```
+
+```lib/use-global-store.ts
+import { createStore } from "@/lib/createStore";
+
+type AlertConfig = {
+  title?: string;
+  description?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+};
+
+type State = {
+  alertOpen: boolean;
+  alertConfig: AlertConfig | null;
+};
+
+type Actions = {
+  updateAlertOpen: (is: State["alertOpen"]) => void;
+  showAlert: (config: AlertConfig) => void;
+};
+
+type Store = State & Actions;
+
+const useGlobalStore = createStore<Store>(
+  (set) => ({
+    alertOpen: false,
+    alertConfig: null,
+
+    updateAlertOpen: (is) =>
+      set((state) => {
+        state.alertOpen = is;
+        if (!is) state.alertConfig = null;
+      }),
+
+    showAlert: (config) =>
+      set((state) => {
+        state.alertOpen = true;
+        state.alertConfig = config;
+      }),
+  }),
+  {
+    name: "global-store",
+    excludeFromPersist: ["alertOpen"],
+  }
+);
+
+const alert = (config: AlertConfig) => {
+  useGlobalStore.getState().showAlert(config);
+};
+
+export { useGlobalStore, alert };
+
+
+```
+
+```components/ui/alert-dialog-provider.tsx
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useGlobalStore } from "@/lib/useGlobalStore";
+
+const AlertDialogProvider = () => {
+  const { alertOpen, alertConfig, updateAlertOpen } = useGlobalStore();
+
+  const handleConfirm = () => {
+    if (alertConfig?.onConfirm) {
+      alertConfig.onConfirm();
+    }
+    updateAlertOpen(false);
+  };
+
+  const handleCancel = () => {
+    if (alertConfig?.onCancel) {
+      alertConfig.onCancel();
+    }
+    updateAlertOpen(false);
+  };
+
+  if (!alertConfig) return null;
+
+  return (
+    <AlertDialog open={alertOpen} onOpenChange={updateAlertOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {alertConfig.title || "Confirmation Required"}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {alertConfig.description ||
+              "Are you sure you want to perform this action?"}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={handleCancel}>
+            {alertConfig.cancelLabel || "Cancel"}
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirm}>
+            {alertConfig.confirmLabel || "Continue"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
+
+export { AlertDialogProvider };
+
+
+```
+
+```providers.tsx
+
+"use client";
+
+import { AlertDialogProvider } from "@/components/ui/alert-dialog-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { ReactNode } from "react";
+
+type ProvidersProps = {
+  children: ReactNode;
+};
+
+const queryClient = new QueryClient();
+
+const Providers = ({ children }: ProvidersProps) => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <NextThemesProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <Toaster />
+        <AlertDialogProvider />
+        {children}
+      </NextThemesProvider>
+    </QueryClientProvider>
+  );
+};
+
+export { Providers };
+
+```
+
+now import it in category cards component
+
+now create a new category in db and show alert works
+
+`npm i zod`
+
+```categories/_types/category-schema.ts
+import { z } from "zod";
+
+const categorySchema = z.intersection(
+  z.object({
+    name: z.string().min(1).max(255),
+  }),
+  z.discriminatedUnion("action", [
+    z.object({ action: z.literal("create") }),
+    z.object({ action: z.literal("update"), id: z.number().min(1) }),
+  ])
+);
+
+type CategorySchema = z.infer<typeof categorySchema>;
+
+const categoryDefaultValues: CategorySchema = {
+  action: "create",
+  name: "",
+};
+
+export { categorySchema, categoryDefaultValues, type CategorySchema };
+
+```
+
+now complete crud for category
