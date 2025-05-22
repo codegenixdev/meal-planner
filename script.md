@@ -1843,5 +1843,19 @@ export { NoItemsFound };
 
 ```
 
-now copy category and paste for serving units
+copy categories
+change name of folder to serving-units
+change name of files from category to serving unit
+/categories/ => /serving-units/ (no need for match)
+"categories" => "servingUnits" (nothing)
+categories-store => serving-units-store (nothing)
+"Category => "Serving Unit (match case)
+Category => ServingUnit (match case)
+category- => serving-unit-
+category<space> => serving unit<space> (match case)
+category => servingUnit
+Categories => Serving Units (match whole word, match case)
+Categories => ServingUnits (match case)
+categories => servingUnits (match case)
+
 then complete foods crud
