@@ -210,6 +210,12 @@ const Layout = ({ children }: LayoutProps) => {
 export default Layout;
 ```
 
+`npm i --save-dev prettier prettier-plugin-tailwindcss`
+
+```.prettierrc
+{ "plugins": ["prettier-plugin-tailwindcss"] }
+```
+
 ```(dashboard)/_components/dashboard-layout.tsx
 
 "use client";
@@ -844,7 +850,7 @@ const CategoryCards = () => {
     <div className="grid grid-cols-4 gap-2">
       {categoriesQuery.data?.map((item) => (
         <div
-          className="flex justify-between shadow-md rounded-lg flex-col p-6 gap-3"
+          className="flex justify-between shadow-md rounded-lg flex-col p-6 gap-3 bg-accent"
           key={item.id}
         >
           <p className="truncate">{item.name}</p>
@@ -1131,4 +1137,711 @@ export { categorySchema, categoryDefaultValues, type CategorySchema };
 
 ```
 
-now complete crud for category
+```categories/category-form-dialog.tsx
+"use client";
+
+import { useCategoriesStore } from "@/app/(dashboard)/admin/foods-management/categories/_libs/use-category-store";
+import {
+  useCreateCategory,
+  useUpdateCategory,
+} from "@/app/(dashboard)/admin/foods-management/categories/_services/use-category-mutations";
+import { useCategory } from "@/app/(dashboard)/admin/foods-management/categories/_services/use-category-queries";
+import {
+  categoryDefaultValues,
+  categorySchema,
+  CategorySchema,
+} from "@/app/(dashboard)/admin/foods-management/categories/_types/category-schema";
+import { Button } from "@/components/ui/button";
+import { ControlledInput } from "@/components/ui/controlled/controlled-input";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus } from "lucide-react";
+import { useEffect } from "react";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+
+type CategoryFormDialogProps = {
+  smallTrigger?: boolean;
+};
+const CategoryFormDialog = ({ smallTrigger }: CategoryFormDialogProps) => {
+  const form = useForm<CategorySchema>({
+    defaultValues: categoryDefaultValues,
+    resolver: zodResolver(categorySchema),
+  });
+
+  const {
+    selectedCategoryId,
+    updateSelectedCategoryId,
+    categoryDialogOpen,
+    updateCategoryDialogOpen,
+  } = useCategoriesStore();
+
+  const categoryQuery = useCategory();
+  const createCategoryMutation = useCreateCategory();
+  const updateCategoryMutation = useUpdateCategory();
+
+  const isPending =
+    createCategoryMutation.isPending || updateCategoryMutation.isPending;
+
+  useEffect(() => {
+    if (!!selectedCategoryId && categoryQuery.data) {
+      form.reset(categoryQuery.data);
+    }
+  }, [categoryQuery.data, form, selectedCategoryId]);
+
+  const handleDialogOpenChange = (open: boolean) => {
+    updateCategoryDialogOpen(open);
+
+    if (!open) {
+      updateSelectedCategoryId(null);
+      form.reset(categoryDefaultValues);
+    }
+  };
+
+  const handleSuccess = () => {
+    handleDialogOpenChange(false);
+  };
+
+  const onSubmit: SubmitHandler<CategorySchema> = (data) => {
+    if (data.action === "create") {
+      createCategoryMutation.mutate(data, {
+        onSuccess: handleSuccess,
+      });
+    } else {
+      updateCategoryMutation.mutate(data, { onSuccess: handleSuccess });
+    }
+  };
+
+  return (
+    <Dialog open={categoryDialogOpen} onOpenChange={handleDialogOpenChange}>
+      <DialogTrigger asChild>
+        {smallTrigger ? (
+          <Button size="icon" variant="ghost" type="button">
+            <Plus />
+          </Button>
+        ) : (
+          <Button>
+            <Plus className="mr-2" />
+            New Category
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-2xl">
+            {selectedCategoryId ? "Edit Category" : "Create a New Category"}
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormProvider {...form}>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <ControlledInput<CategorySchema>
+                  name="name"
+                  label="Name"
+                  placeholder="Enter category name"
+                />
+              </div>
+            </div>
+          </FormProvider>
+          <DialogFooter>
+            <Button type="submit" isLoading={isPending}>
+              {!!selectedCategoryId ? "Edit" : "Create"} Category
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+export { CategoryFormDialog };
+
+
+
+```
+
+```category mutations
+const createCategory = async (data: CategorySchema) => {
+  await executeAction({
+    actionFn: () =>
+      db.category.create({
+        data: {
+          name: data.name,
+        },
+      }),
+  });
+};
+
+const updateCategory = async (data: CategorySchema) => {
+  if (data.action === "update") {
+    await executeAction({
+      actionFn: () =>
+        db.category.update({
+          where: { id: data.id },
+          data: {
+            name: data.name,
+          },
+        }),
+    });
+  }
+};
+```
+
+```category use mutations
+const useCreateCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CategorySchema) => {
+      await createCategory(data);
+    },
+    onSuccess: () => {
+      toast.success("Category created successfully.");
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+};
+
+const useUpdateCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CategorySchema) => {
+      await updateCategory(data);
+    },
+    onSuccess: () => {
+      toast.success("Category updated successfully.");
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+};
+```
+
+```category queries
+const getCategory = async (id: number): Promise<CategorySchema> => {
+  const res = await db.category.findFirst({
+    where: { id },
+  });
+
+  return {
+    ...res,
+    action: "update",
+    name: res?.name ?? "",
+    id,
+  };
+};
+
+```
+
+```category use queries
+const useCategory = () => {
+  const { selectedCategoryId } = useCategoriesStore();
+
+  return useQuery({
+    queryKey: ["categories", { selectedCategoryId }],
+    queryFn: () => getCategory(selectedCategoryId!),
+    enabled: !!selectedCategoryId,
+  });
+};
+```
+
+`npm i react-hook-form @hookform/resolvers`
+
+`npx shadcn@latest add input label dialog`
+
+```ui/controlled-input.tsx
+"use client";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { ComponentProps } from "react";
+import { Controller, FieldValues, Path, useFormContext } from "react-hook-form";
+
+type InputProps<T extends FieldValues> = {
+  name: Path<T>;
+  label?: string;
+  containerClassName?: string;
+} & ComponentProps<"input">;
+
+const ControlledInput = <T extends FieldValues>({
+  className,
+  type,
+  name,
+  label,
+  containerClassName,
+  ...props
+}: InputProps<T>) => {
+  const { control } = useFormContext<T>();
+
+  return (
+    <div className={cn("w-full", containerClassName)}>
+      {!!label && (
+        <Label className="mb-2" htmlFor={name}>
+          {label}
+        </Label>
+      )}
+
+      <Controller
+        name={name}
+        control={control}
+        render={({ field, fieldState: { error } }) => (
+          <>
+            <Input
+              type={type}
+              id={name}
+              data-slot="input"
+              aria-invalid={!!error}
+              className={className}
+              {...field}
+              {...props}
+            />
+            {!!error && (
+              <p className="text-destructive text-sm">{error.message}</p>
+            )}
+          </>
+        )}
+      />
+    </div>
+  );
+};
+
+export { ControlledInput };
+
+
+```
+
+```ui/button.tsx
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import { Loader2 } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+
+const badgeVariants = cva(
+  "absolute rounded-full flex items-center justify-center text-xs font-medium",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground",
+        destructive: "bg-destructive text-white",
+        secondary: "bg-secondary text-secondary-foreground",
+        outline: "border bg-background text-foreground",
+      },
+      size: {
+        default: "size-4 -top-1 -right-1",
+        sm: "size-3 -top-0.5 -right-0.5 text-[0.6rem]",
+        lg: "size-5 -top-1 -right-1",
+        icon: "size-5 -top-1 -right-1",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+const buttonVariants = cva(
+  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  {
+    variants: {
+      variant: {
+        default:
+          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        outline:
+          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
+        ghost:
+          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
+        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        icon: "size-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+interface ButtonProps
+  extends React.ComponentProps<"button">,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+  isLoading?: boolean;
+  loadingText?: string;
+  badge?: boolean;
+  badgeVariant?: VariantProps<typeof badgeVariants>["variant"];
+}
+
+const Button = ({
+  className,
+  variant,
+  size,
+  asChild = false,
+  isLoading = false,
+  loadingText,
+  children,
+  disabled,
+  badge,
+  badgeVariant = "default",
+  ...props
+}: ButtonProps) => {
+  const Comp = asChild ? Slot : "button";
+
+  const renderBadge = () => {
+    if (!badge) return null;
+    return (
+      <span className={cn(badgeVariants({ variant: badgeVariant, size }))} />
+    );
+  };
+
+  const content = (
+    <>
+      {isLoading ? (
+        <>
+          <Loader2 className="animate-spin" />
+          {loadingText || children}
+        </>
+      ) : (
+        children
+      )}
+      {renderBadge()}
+    </>
+  );
+
+  if (asChild) {
+    return <Comp {...props}>{content}</Comp>;
+  }
+
+  return (
+    <Comp
+      data-slot="button"
+      className={cn(buttonVariants({ variant, size, className }))}
+      disabled={disabled || isLoading}
+      {...props}
+    >
+      {content}
+    </Comp>
+  );
+};
+
+export { Button, buttonVariants };
+export type { ButtonProps };
+
+
+```
+
+```categories/category-form-dialog.tsx
+"use client";
+
+import { useCategoriesStore } from "@/app/(dashboard)/admin/foods-management/categories/_libs/use-category-store";
+import {
+  useCreateCategory,
+  useUpdateCategory,
+} from "@/app/(dashboard)/admin/foods-management/categories/_services/use-category-mutations";
+import { useCategory } from "@/app/(dashboard)/admin/foods-management/categories/_services/use-category-queries";
+import {
+  categoryDefaultValues,
+  categorySchema,
+  CategorySchema,
+} from "@/app/(dashboard)/admin/foods-management/categories/_types/category-schema";
+import { Button } from "@/components/ui/button";
+import { ControlledInput } from "@/components/ui/controlled-input";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus } from "lucide-react";
+import { useEffect } from "react";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+
+type CategoryFormDialogProps = {
+  smallTrigger?: boolean;
+};
+const CategoryFormDialog = ({ smallTrigger }: CategoryFormDialogProps) => {
+  const form = useForm<CategorySchema>({
+    defaultValues: categoryDefaultValues,
+    resolver: zodResolver(categorySchema),
+  });
+
+  const {
+    selectedCategoryId,
+    updateSelectedCategoryId,
+    categoryDialogOpen,
+    updateCategoryDialogOpen,
+  } = useCategoriesStore();
+
+  const categoryQuery = useCategory();
+  const createCategoryMutation = useCreateCategory();
+  const updateCategoryMutation = useUpdateCategory();
+
+  const isPending =
+    createCategoryMutation.isPending || updateCategoryMutation.isPending;
+
+  useEffect(() => {
+    if (!!selectedCategoryId && categoryQuery.data) {
+      form.reset(categoryQuery.data);
+    }
+  }, [categoryQuery.data, form, selectedCategoryId]);
+
+  const handleDialogOpenChange = (open: boolean) => {
+    updateCategoryDialogOpen(open);
+
+    if (!open) {
+      updateSelectedCategoryId(null);
+      form.reset(categoryDefaultValues);
+    }
+  };
+
+  const handleSuccess = () => {
+    handleDialogOpenChange(false);
+  };
+
+  const onSubmit: SubmitHandler<CategorySchema> = (data) => {
+    if (data.action === "create") {
+      createCategoryMutation.mutate(data, {
+        onSuccess: handleSuccess,
+      });
+    } else {
+      updateCategoryMutation.mutate(data, { onSuccess: handleSuccess });
+    }
+  };
+
+  return (
+    <Dialog open={categoryDialogOpen} onOpenChange={handleDialogOpenChange}>
+      <DialogTrigger asChild>
+        {smallTrigger ? (
+          <Button size="icon" variant="ghost" type="button">
+            <Plus />
+          </Button>
+        ) : (
+          <Button>
+            <Plus className="mr-2" />
+            New Category
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-2xl">
+            {selectedCategoryId ? "Edit Category" : "Create a New Category"}
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormProvider {...form}>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <ControlledInput<CategorySchema>
+                  name="name"
+                  label="Name"
+                  placeholder="Enter category name"
+                />
+              </div>
+            </div>
+          </FormProvider>
+          <DialogFooter>
+            <Button type="submit" isLoading={isPending}>
+              {!!selectedCategoryId ? "Edit" : "Create"} Category
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+export { CategoryFormDialog };
+
+```
+
+```categories page.tsx
+import { CategoryCards } from "@/app/(dashboard)/admin/foods-management/categories/_components/category-cards";
+import { CategoryFormDialog } from "@/app/(dashboard)/admin/foods-management/categories/_components/category-form-dialog";
+
+const Page = () => {
+  return (
+    <>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-3xl font-semibold">Categories List</h1>
+        <CategoryFormDialog />
+      </div>
+      <CategoryCards />
+    </>
+  );
+};
+
+export default Page;
+```
+
+show and edit not working
+
+```category cards
+
+  const { updateSelectedCategoryId, updateCategoryDialogOpen } =
+    useCategoriesStore();
+
+
+  onClick={() => {
+  updateSelectedCategoryId(item.id);
+  updateCategoryDialogOpen(true);
+}}
+```
+
+show
+
+`npx shadcn@latest add skeleton`
+
+```category-cards-skeleton.tsx
+
+"use client";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const CategoryCardsSkeleton = () => {
+  const skeletonCards = Array(12).fill(null);
+
+  return (
+    <>
+      {skeletonCards.map((_, index) => (
+        <div
+          className="flex flex-col justify-between gap-3 rounded-lg border p-6"
+          key={index}
+        >
+          <Skeleton className="h-5 w-24" />
+          <div className="flex gap-1">
+            <Skeleton className="size-6 rounded-md" />
+            <Skeleton className="size-6 rounded-md" />
+          </div>
+        </div>
+      ))}
+    </>
+  );
+};
+
+export { CategoryCardsSkeleton };
+
+
+```
+
+add to cards
+
+```category-cards.tsx
+
+"use client";
+import { CategoryCardsSkeleton } from "@/app/(dashboard)/admin/foods-management/categories/_components/category-cards-skeleton";
+import { useCategoriesStore } from "@/app/(dashboard)/admin/foods-management/categories/_libs/use-category-store";
+import { useDeleteCategory } from "@/app/(dashboard)/admin/foods-management/categories/_services/use-category-mutations";
+import { useCategories } from "@/app/(dashboard)/admin/foods-management/categories/_services/use-category-queries";
+import { Button } from "@/components/ui/button";
+import { alert } from "@/lib/use-global-store";
+import { Edit, Trash } from "lucide-react";
+
+const CategoryCards = () => {
+  const { updateSelectedCategoryId, updateCategoryDialogOpen } =
+    useCategoriesStore();
+
+  const categoriesQuery = useCategories();
+  const deleteCategoryMutation = useDeleteCategory();
+
+  return (
+    <div className="grid grid-cols-4 gap-2">
+      {categoriesQuery.isLoading ? (
+        <CategoryCardsSkeleton />
+      ) : (
+        <>
+          {categoriesQuery.data?.map((item) => (
+            <div
+              className="flex justify-between shadow-md rounded-lg flex-col p-6 gap-3 bg-accent hover:bg-background-300 transition-all duration-200 ease-in-out"
+              key={item.id}
+            >
+              <p className="truncate">{item.name}</p>
+              <div className="flex gap-1">
+                <Button
+                  className="size-6"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    updateSelectedCategoryId(item.id);
+                    updateCategoryDialogOpen(true);
+                  }}
+                >
+                  <Edit />
+                </Button>
+                <Button
+                  className="size-6"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    alert({
+                      onConfirm: () => deleteCategoryMutation.mutate(item.id),
+                    });
+                  }}
+                >
+                  <Trash />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  );
+};
+
+export { CategoryCards };
+
+
+```
+
+```components/no-items-found.tsx
+import { Button } from "@/components/ui/button";
+import { CircleOff } from "lucide-react";
+
+type NoItemsFoundProps = {
+  onClick: () => void;
+};
+const NoItemsFound = ({ onClick }: NoItemsFoundProps) => {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <CircleOff className="text-primary mb-2" />
+      <h3 className="text-lg font-medium">No items found</h3>
+      <p className="text-foreground/60 mt-1 text-sm">Try add new items</p>
+      <Button variant="outline" className="mt-4" onClick={onClick}>
+        Add new item
+      </Button>
+    </div>
+  );
+};
+
+export { NoItemsFound };
+
+```
+
+```category-cards.tsx
+  if (categoriesQuery.data?.length === 0) {
+    return <NoItemsFound onClick={() => updateCategoryDialogOpen(true)} />;
+  }
+
+```
+
+now copy category and paste for serving units
+then complete foods crud
