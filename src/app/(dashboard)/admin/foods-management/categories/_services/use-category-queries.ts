@@ -2,7 +2,7 @@ import { useCategoriesStore } from "@/app/(dashboard)/admin/foods-management/cat
 import {
   getCategories,
   getCategory,
-} from "@/app/(dashboard)/admin/foods-management/categories/_services/category-queries";
+} from "@/app/(dashboard)/admin/foods-management/categories/_services/categoryQueries";
 import { useQuery } from "@tanstack/react-query";
 
 const useCategories = () => {

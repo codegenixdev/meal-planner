@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "$/generated/prisma";
 import { fromError } from "zod-validation-error";
 
 import { ZodError } from "zod";

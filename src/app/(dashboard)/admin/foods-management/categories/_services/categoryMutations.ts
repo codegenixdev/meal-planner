@@ -1,5 +1,5 @@
 "use server";
-import { CategorySchema } from "@/app/(dashboard)/admin/foods-management/categories/_types/category-schema";
+import { CategorySchema } from "@/app/(dashboard)/admin/foods-management/categories/_types/categorySchema";
 import db from "@/lib/db";
 import { executeAction } from "@/lib/executeAction";
 

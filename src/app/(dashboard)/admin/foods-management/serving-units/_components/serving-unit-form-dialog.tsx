@@ -10,7 +10,7 @@ import {
   servingUnitDefaultValues,
   servingUnitSchema,
   ServingUnitSchema,
-} from "@/app/(dashboard)/admin/foods-management/serving-units/_types/serving-unit-schema";
+} from "@/app/(dashboard)/admin/foods-management/serving-units/_types/servingUnitSchema";
 import { Button } from "@/components/ui/button";
 import { ControlledInput } from "@/components/ui/controlled-input";
 import {

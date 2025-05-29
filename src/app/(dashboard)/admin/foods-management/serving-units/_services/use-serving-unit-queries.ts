@@ -2,7 +2,7 @@ import { useServingUnitsStore } from "@/app/(dashboard)/admin/foods-management/s
 import {
   getServingUnits,
   getServingUnit,
-} from "@/app/(dashboard)/admin/foods-management/serving-units/_services/serving-unit-queries";
+} from "@/app/(dashboard)/admin/foods-management/serving-units/_services/servingUnitQueries";
 import { useQuery } from "@tanstack/react-query";
 
 const useServingUnits = () => {

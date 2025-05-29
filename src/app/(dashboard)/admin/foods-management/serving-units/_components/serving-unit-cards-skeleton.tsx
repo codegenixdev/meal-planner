@@ -12,10 +12,6 @@ const ServingUnitCardsSkeleton = () => {
           key={index}
         >
           <Skeleton className="h-5 w-24" />
-          <div className="flex gap-1">
-            <Skeleton className="size-6 rounded-md" />
-            <Skeleton className="size-6 rounded-md" />
-          </div>
         </div>
       ))}
     </>

@@ -1,5 +1,5 @@
 "use server";
-import { ServingUnitSchema } from "@/app/(dashboard)/admin/foods-management/serving-units/_types/serving-unit-schema";
+import { ServingUnitSchema } from "@/app/(dashboard)/admin/foods-management/serving-units/_types/servingUnitSchema";
 import db from "@/lib/db";
 
 const getServingUnits = async () => {

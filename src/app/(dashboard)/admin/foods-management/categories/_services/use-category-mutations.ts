@@ -2,8 +2,8 @@ import {
   createCategory,
   deleteCategory,
   updateCategory,
-} from "@/app/(dashboard)/admin/foods-management/categories/_services/category-mutations";
-import { CategorySchema } from "@/app/(dashboard)/admin/foods-management/categories/_types/category-schema";
+} from "@/app/(dashboard)/admin/foods-management/categories/_services/categoryMutations";
+import { CategorySchema } from "@/app/(dashboard)/admin/foods-management/categories/_types/categorySchema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 

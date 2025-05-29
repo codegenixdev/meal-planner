@@ -2,8 +2,8 @@ import {
   createServingUnit,
   deleteServingUnit,
   updateServingUnit,
-} from "@/app/(dashboard)/admin/foods-management/serving-units/_services/serving-unit-mutations";
-import { ServingUnitSchema } from "@/app/(dashboard)/admin/foods-management/serving-units/_types/serving-unit-schema";
+} from "@/app/(dashboard)/admin/foods-management/serving-units/_services/servingUnitMutations";
+import { ServingUnitSchema } from "@/app/(dashboard)/admin/foods-management/serving-units/_types/servingUnitSchema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 

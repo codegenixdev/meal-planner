@@ -617,7 +617,7 @@ mode `admin/page` to `admin/foods-management/categories/page.tsx`
 
 show sidebar
 
-```categories/_services/category-queries.ts
+```categories/_services/categoryQueries.ts
 
 "use client";
 import db from "@/lib/db";
@@ -683,7 +683,7 @@ export { useCategories };
 
 ```lib/getErrorMessage
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "$/generated/prisma";
 import { fromError } from "zod-validation-error";
 
 import { ZodError } from "zod";
@@ -800,7 +800,7 @@ export { executeAction };
 
 ```
 
-```categories/_services/category-mutations.ts
+```categories/_services/categoryMutations.ts
 "use client";
 import db from "@/lib/db";
 import { executeAction } from "@/lib/executeAction";
@@ -1113,7 +1113,7 @@ now create a new category in db and show alert works
 
 `npm i zod`
 
-```categories/_types/category-schema.ts
+```categories/_types/categorySchema.ts
 import { z } from "zod";
 
 const categorySchema = z.intersection(
@@ -1150,7 +1150,7 @@ import {
   categoryDefaultValues,
   categorySchema,
   CategorySchema,
-} from "@/app/(dashboard)/admin/foods-management/categories/_types/category-schema";
+} from "@/app/(dashboard)/admin/foods-management/categories/_types/categorySchema";
 import { Button } from "@/components/ui/button";
 import { ControlledInput } from "@/components/ui/controlled/controlled-input";
 import {
@@ -1560,7 +1560,7 @@ import {
   categoryDefaultValues,
   categorySchema,
   CategorySchema,
-} from "@/app/(dashboard)/admin/foods-management/categories/_types/category-schema";
+} from "@/app/(dashboard)/admin/foods-management/categories/_types/categorySchema";
 import { Button } from "@/components/ui/button";
 import { ControlledInput } from "@/components/ui/controlled-input";
 import {
@@ -1858,4 +1858,535 @@ Categories => Serving Units (match whole word, match case)
 Categories => ServingUnits (match case)
 categories => servingUnits (match case)
 
-then complete foods crud
+```ts foods/_types/foodSchema.ts
+import { patterns } from "@/lib/constants";
+import { regexSchema, requiredStringSchema } from "@/lib/zodSchema";
+import { z } from "zod";
+
+const foodSchema = z.intersection(
+  z.object({
+    name: requiredStringSchema,
+    calories: regexSchema(patterns.zeroTo9999),
+    protein: regexSchema(patterns.zeroTo9999),
+    fat: regexSchema(patterns.zeroTo9999),
+    carbohydrates: regexSchema(patterns.zeroTo9999),
+    fiber: regexSchema(patterns.zeroTo9999),
+    sugar: regexSchema(patterns.zeroTo9999),
+    categoryId: requiredStringSchema,
+    foodServingUnits: z.array(
+      z.object({
+        foodServingUnitId: requiredStringSchema,
+        grams: regexSchema(patterns.zeroTo9999),
+      }),
+    ),
+  }),
+  z.discriminatedUnion("action", [
+    z.object({ action: z.literal("create") }),
+    z.object({ action: z.literal("update"), id: z.number() }),
+  ]),
+);
+
+type FoodSchema = z.infer<typeof foodSchema>;
+
+const foodDefaultValues: FoodSchema = {
+  action: "create",
+  foodServingUnits: [],
+  name: "",
+  categoryId: "",
+  calories: "",
+  carbohydrates: "",
+  fat: "",
+  fiber: "",
+  protein: "",
+  sugar: "",
+};
+
+export { foodSchema, foodDefaultValues, type FoodSchema };
+```
+
+```ts lib/zodSchema.ts
+import { patterns } from "@/lib/constants";
+import { z } from "zod";
+
+const regexSchema = (pattern: RegExp) => z.coerce.string().regex(pattern);
+const requiredStringSchema = z.string().min(1).max(255).trim();
+export { regexSchema, requiredStringSchema };
+```
+
+```ts lib/constants.ts
+const patterns = {
+  zeroTo9999: /^(|0|0\.\d{0,2}|[1-9]\d{0,3}(\.\d{0,2})?)$/,
+  email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  minimumOneUpperCaseLetter: /[A-Z]/,
+  minimumOneLowerCaseLetter: /[a-z]/,
+  minimumOneDigit: /[0-9]/,
+  minimumOneSpecialCharacter: /[@$!%*#?&]/,
+  minEightCharacters: /^.{8,}$/,
+};
+
+export { patterns };
+```
+
+```ts foods/_types/foodFilterSchema.ts
+import { patterns } from "@/lib/constants";
+import { regexSchema } from "@/lib/zodSchema";
+import { z } from "zod";
+
+const foodFiltersSchema = z.object({
+  searchTerm: z.string(),
+  caloriesRange: z.tuple([
+    regexSchema(patterns.zeroTo9999),
+    regexSchema(patterns.zeroTo9999),
+  ]),
+  proteinRange: z.tuple([
+    regexSchema(patterns.zeroTo9999),
+    regexSchema(patterns.zeroTo9999),
+  ]),
+  categoryId: z.string(),
+  sortBy: z
+    .enum(["name", "calories", "protein", "carbohydrates", "fat"])
+    .optional(),
+  sortOrder: z.enum(["asc", "desc"]).optional(),
+  page: z.number(),
+  pageSize: z.number().max(100),
+});
+
+type FoodFiltersSchema = z.infer<typeof foodFiltersSchema>;
+
+const foodFiltersDefaultValues: FoodFiltersSchema = {
+  searchTerm: "",
+  caloriesRange: ["0", "9999"],
+  proteinRange: ["0", "9999"],
+  categoryId: "",
+  sortBy: "name",
+  sortOrder: "desc",
+  pageSize: 12,
+  page: 1,
+};
+
+export { foodFiltersSchema, type FoodFiltersSchema, foodFiltersDefaultValues };
+```
+
+```ts foods/_services/foodQueries.ts
+"use server";
+
+import {
+  FoodFiltersSchema,
+  foodFiltersSchema,
+} from "@/app/(dashboard)/admin/foods-management/foods/_types/foodFilterSchema";
+import { FoodSchema } from "@/app/(dashboard)/admin/foods-management/foods/_types/foodSchema";
+import db from "@/lib/db";
+import { PaginatedResult } from "@/lib/types/paginatedResult";
+import { toStringSafe } from "@/lib/utils";
+import { Prisma } from "$/generated/prisma";
+
+type FoodWithServingUnits = Prisma.FoodGetPayload<{
+  include: {
+    foodServingUnits: true;
+  };
+}>;
+
+const getFoods = async (
+  filters: FoodFiltersSchema,
+): Promise<PaginatedResult<FoodWithServingUnits>> => {
+  const validatedFilters = foodFiltersSchema.parse(filters);
+
+  const {
+    searchTerm,
+    caloriesRange = ["", ""],
+    proteinRange = ["", ""],
+    categoryId,
+    sortBy = "name",
+    sortOrder = "asc",
+    page = 1,
+    pageSize = 10,
+  } = validatedFilters || {};
+
+  const where: Prisma.FoodWhereInput = {};
+
+  if (searchTerm) {
+    where.name = { contains: searchTerm };
+  }
+
+  const [minCaloriesStr, maxCaloriesStr] = caloriesRange;
+  const numericMinCalories =
+    minCaloriesStr === "" ? undefined : Number(minCaloriesStr);
+  const numericMaxCalories =
+    maxCaloriesStr === "" ? undefined : Number(maxCaloriesStr);
+
+  if (numericMinCalories !== undefined || numericMaxCalories !== undefined) {
+    where.calories = {};
+    if (numericMinCalories !== undefined)
+      where.calories.gte = numericMinCalories;
+    if (numericMaxCalories !== undefined)
+      where.calories.lte = numericMaxCalories;
+  }
+
+  const [minProteinStr, maxProteinStr] = proteinRange;
+  const numericMinProtein =
+    minProteinStr === "" ? undefined : Number(minProteinStr);
+  const numericMaxProtein =
+    maxProteinStr === "" ? undefined : Number(maxProteinStr);
+
+  if (numericMinProtein !== undefined || numericMaxProtein !== undefined) {
+    where.protein = {};
+    if (numericMinProtein !== undefined) where.protein.gte = numericMinProtein;
+    if (numericMaxProtein !== undefined) where.protein.lte = numericMaxProtein;
+  }
+
+  const numericCategoryId = categoryId ? Number(categoryId) : undefined;
+  if (numericCategoryId !== undefined && numericCategoryId !== 0) {
+    where.category = {
+      id: numericCategoryId,
+    };
+  }
+
+  const skip = (page - 1) * pageSize;
+
+  const [total, data] = await Promise.all([
+    db.food.count({ where }),
+    db.food.findMany({
+      where,
+      orderBy: { [sortBy]: sortOrder },
+      skip,
+      take: pageSize,
+      include: { foodServingUnits: true },
+    }),
+  ]);
+
+  return {
+    data,
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
+};
+
+const getFood = async (id: number): Promise<FoodSchema | null> => {
+  const res = await db.food.findFirst({
+    where: { id },
+    include: {
+      foodServingUnits: true,
+    },
+  });
+
+  if (!res) return null;
+
+  return {
+    action: "update" as const,
+    id,
+    name: toStringSafe(res.name),
+    calories: toStringSafe(res.calories),
+    carbohydrates: toStringSafe(res.carbohydrates),
+    fat: toStringSafe(res.fat),
+    fiber: toStringSafe(res.fiber),
+    protein: toStringSafe(res.protein),
+    sugar: toStringSafe(res.sugar),
+    categoryId: toStringSafe(res.categoryId),
+    foodServingUnits:
+      res.foodServingUnits.map((item) => ({
+        foodServingUnitId: toStringSafe(item.servingUnitId),
+        grams: toStringSafe(item.grams),
+      })) ?? [],
+  };
+};
+
+export { getFood, getFoods };
+```
+
+```ts lib/types/paginatedResult.ts
+type PaginatedResult<T> = {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+export { type PaginatedResult };
+```
+
+```ts lib/utils.ts
+const toStringSafe = (
+  value: string | number | null | undefined | unknown,
+): string => {
+  return value == null ? "" : String(value);
+};
+
+const toNumberSafe = (value: string | number | null | undefined): number => {
+  if (value == null) return 0;
+  if (typeof value === "number") return value;
+
+  const parsed = Number(value);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
+export { toStringSafe, toNumberSafe, cn };
+```
+
+```ts foods/_services/foodMutations.ts
+"use server";
+
+import {
+  FoodSchema,
+  foodSchema,
+} from "@/app/(dashboard)/admin/foods-management/foods/_types/foodSchema";
+import db from "@/lib/db";
+import { executeAction } from "@/lib/executeAction";
+import { toNumberSafe } from "@/lib/utils";
+
+const createFood = async (data: FoodSchema) => {
+  await executeAction({
+    actionFn: async () => {
+      const validatedData = foodSchema.parse(data);
+
+      const food = await db.food.create({
+        data: {
+          name: validatedData.name,
+          calories: toNumberSafe(validatedData.calories),
+          carbohydrates: toNumberSafe(validatedData.carbohydrates),
+          fat: toNumberSafe(validatedData.fat),
+          fiber: toNumberSafe(validatedData.fiber),
+          sugar: toNumberSafe(validatedData.sugar),
+          protein: toNumberSafe(validatedData.protein),
+          categoryId: toNumberSafe(validatedData.categoryId) || null,
+        },
+      });
+
+      await Promise.all(
+        validatedData.foodServingUnits.map(async (unit) => {
+          await db.foodServingUnit.create({
+            data: {
+              foodId: food.id,
+              servingUnitId: toNumberSafe(unit.foodServingUnitId),
+              grams: toNumberSafe(unit.grams),
+            },
+          });
+        }),
+      );
+    },
+  });
+};
+
+const updateFood = async (data: FoodSchema) => {
+  await executeAction({
+    actionFn: async () => {
+      const validatedData = foodSchema.parse(data);
+      if (validatedData.action === "update") {
+        await db.food.update({
+          where: { id: validatedData.id },
+          data: {
+            name: validatedData.name,
+            calories: toNumberSafe(validatedData.calories),
+            carbohydrates: toNumberSafe(validatedData.carbohydrates),
+            fat: toNumberSafe(validatedData.fat),
+            fiber: toNumberSafe(validatedData.fiber),
+            sugar: toNumberSafe(validatedData.sugar),
+            protein: toNumberSafe(validatedData.protein),
+            categoryId: toNumberSafe(validatedData.categoryId) || null,
+          },
+        });
+
+        await db.foodServingUnit.deleteMany({
+          where: { foodId: validatedData.id },
+        });
+
+        await Promise.all(
+          validatedData.foodServingUnits.map(async (unit) => {
+            await db.foodServingUnit.create({
+              data: {
+                foodId: validatedData.id,
+                servingUnitId: toNumberSafe(unit.foodServingUnitId),
+                grams: toNumberSafe(unit.grams),
+              },
+            });
+          }),
+        );
+      }
+    },
+  });
+};
+
+const deleteFood = async (id: number) => {
+  await executeAction({
+    actionFn: async () => {
+      await db.foodServingUnit.deleteMany({
+        where: { foodId: id },
+      });
+
+      await db.food.delete({ where: { id } });
+    },
+  });
+};
+
+export { createFood, deleteFood, updateFood };
+```
+
+```ts foods/_libs/use-food-store.ts
+import {
+  foodFiltersDefaultValues,
+  FoodFiltersSchema,
+} from "@/app/(dashboard)/admin/foods-management/foods/_types/foodFilterSchema";
+import { createStore } from "@/lib/createStore";
+
+type State = {
+  selectedFoodId: number | null;
+  foodDialogOpen: boolean;
+  foodFilters: FoodFiltersSchema;
+  foodFiltersDrawerOpen: boolean;
+};
+
+type Actions = {
+  updateSelectedFoodId: (id: State["selectedFoodId"]) => void;
+  updateFoodDialogOpen: (is: State["foodDialogOpen"]) => void;
+  updateFoodFilters: (filters: State["foodFilters"]) => void;
+  updateFoodFiltersDrawerOpen: (is: State["foodFiltersDrawerOpen"]) => void;
+  updateFoodFiltersPage: (action: "next" | "prev" | number) => void;
+  updateFoodFiltersSearchTerm: (
+    str: State["foodFilters"]["searchTerm"],
+  ) => void;
+};
+
+type Store = State & Actions;
+
+const useFoodsStore = createStore<Store>(
+  (set) => ({
+    selectedFoodId: null,
+    updateSelectedFoodId: (id) =>
+      set((state) => {
+        state.selectedFoodId = id;
+      }),
+    foodDialogOpen: false,
+    updateFoodDialogOpen: (is) =>
+      set((state) => {
+        state.foodDialogOpen = is;
+      }),
+    foodFilters: foodFiltersDefaultValues,
+    updateFoodFilters: (filters) =>
+      set((state) => {
+        state.foodFilters = filters;
+      }),
+    foodFiltersDrawerOpen: false,
+    updateFoodFiltersDrawerOpen: (is) =>
+      set((state) => {
+        state.foodFiltersDrawerOpen = is;
+      }),
+    updateFoodFiltersPage: (action) =>
+      set((state) => {
+        const currentPage = state.foodFilters.page;
+        let newPage = currentPage;
+
+        if (action === "next") {
+          newPage = currentPage + 1;
+        } else if (action === "prev") {
+          newPage = Math.max(currentPage - 1, 1);
+        } else if (typeof action === "number") {
+          newPage = action;
+        }
+
+        return {
+          foodFilters: {
+            ...state.foodFilters,
+            page: newPage,
+          },
+        };
+      }),
+    updateFoodFiltersSearchTerm: (searchTerm) =>
+      set((state) => {
+        state.foodFilters.searchTerm = searchTerm;
+      }),
+  }),
+  {
+    name: "foods-store",
+    excludeFromPersist: ["foodFilters"],
+  },
+);
+
+export { useFoodsStore };
+```
+
+```ts foods/_services/use-food-queries.ts
+import { useFoodsStore } from "@/app/(dashboard)/admin/foods-management/foods/_libs/use-food-store";
+import {
+  getFood,
+  getFoods,
+} from "@/app/(dashboard)/admin/foods-management/foods/_services/foodQueries";
+import { useQuery } from "@tanstack/react-query";
+
+const useFoods = () => {
+  const { foodFilters } = useFoodsStore();
+
+  return useQuery({
+    queryKey: ["foods", foodFilters],
+    queryFn: () => getFoods(foodFilters),
+  });
+};
+
+const useFood = () => {
+  const { selectedFoodId } = useFoodsStore();
+
+  return useQuery({
+    queryKey: ["foods", { selectedFoodId }],
+    queryFn: () => getFood(selectedFoodId!),
+    enabled: !!selectedFoodId,
+  });
+};
+
+export { useFoods, useFood };
+```
+
+```ts foods/_services/use-food-mutations.ts
+import {
+  createFood,
+  deleteFood,
+  updateFood,
+} from "@/app/(dashboard)/admin/foods-management/foods/_services/foodMutations";
+import { FoodSchema } from "@/app/(dashboard)/admin/foods-management/foods/_types/foodSchema";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+const useCreateFood = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: FoodSchema) => {
+      await createFood(data);
+    },
+    onSuccess: () => {
+      toast.success("Food created successfully.");
+      queryClient.invalidateQueries({ queryKey: ["foods"] });
+    },
+  });
+};
+
+const useUpdateFood = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: FoodSchema) => {
+      await updateFood(data);
+    },
+    onSuccess: () => {
+      toast.success("Food updated successfully.");
+      queryClient.invalidateQueries({ queryKey: ["foods"] });
+    },
+  });
+};
+
+const useDeleteFood = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await deleteFood(id);
+    },
+    onSuccess: () => {
+      toast.success("Food deleted successfully.");
+      queryClient.invalidateQueries({ queryKey: ["foods"] });
+    },
+  });
+};
+
+export { useCreateFood, useDeleteFood, useUpdateFood };
+```

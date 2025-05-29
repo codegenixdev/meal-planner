@@ -10,7 +10,7 @@ import {
   categoryDefaultValues,
   categorySchema,
   CategorySchema,
-} from "@/app/(dashboard)/admin/foods-management/categories/_types/category-schema";
+} from "@/app/(dashboard)/admin/foods-management/categories/_types/categorySchema";
 import { Button } from "@/components/ui/button";
 import { ControlledInput } from "@/components/ui/controlled-input";
 import {
