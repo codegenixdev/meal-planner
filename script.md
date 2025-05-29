@@ -1,3 +1,7 @@
+todo: make avatar data real
+why normal user can see admin pages
+correct redirection when logged in and when not
+
 `npx create-next-app@latest .`
 
 remove not required files and folder (all things in public, styles and remove code from layout and page)
@@ -679,7 +683,7 @@ const useCategories = () => {
 export { useCategories };
 ```
 
-`npm i zod zod-validation-error next-auth`
+`npm i zod zod-validation-error next-auth@beta`
 
 ```lib/getErrorMessage
 
@@ -3191,4 +3195,822 @@ const Layout = ({ children }: LayoutProps) => {
 };
 
 export default Layout;
+```
+
+```ts (auth)/sign-up/_types/signUpSchema.ts
+import { passwordSchema, requiredStringSchema } from "@/lib/zodSchemas";
+import { z } from "zod";
+
+const signUpSchema = z
+  .object({
+    name: requiredStringSchema,
+    email: z.string().email(),
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+type SignUpSchema = z.infer<typeof signUpSchema>;
+
+const signUpDefaultValues: SignUpSchema = {
+  name: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+};
+
+export { signUpDefaultValues, signUpSchema, type SignUpSchema };
+```
+
+```ts lib/zodSchema.ts
+const passwordSchema = z
+  .string()
+  .max(255)
+  .refine((str) => patterns.minimumOneUpperCaseLetter.test(str), {
+    message: "Minimum one upper case letter",
+  })
+  .refine((str) => patterns.minimumOneLowerCaseLetter.test(str), {
+    message: "Minimum one lower case letter",
+  })
+  .refine((str) => patterns.minimumOneDigit.test(str), {
+    message: "Minimum one digit",
+  })
+  .refine((str) => patterns.minimumOneSpecialCharacter.test(str), {
+    message: "Minimum one special character",
+  })
+  .refine((str) => patterns.minEightCharacters.test(str), {
+    message: "Minimum eight characters",
+  });
+```
+
+```ts sign-up/_services/sign-up-mutations.ts
+"use server";
+
+import {
+  signUpSchema,
+  SignUpSchema,
+} from "@/app/(auth)/sign-up/_types/signUpSchema";
+import db from "@/lib/db";
+import { executeAction } from "@/lib/executeAction";
+import { hashPassword } from "@/lib/utils";
+
+const signUp = async (data: SignUpSchema) => {
+  await executeAction({
+    actionFn: async () => {
+      const validatedData = signUpSchema.parse(data);
+      const hashedPassword = await hashPassword(validatedData.password);
+
+      await db.user.create({
+        data: {
+          name: validatedData.name,
+          email: validatedData.email,
+          password: hashedPassword,
+        },
+      });
+    },
+  });
+};
+
+export { signUp };
+```
+
+`npm i bcryptjs`
+`npm i --save-dev @types/bcryptjs`
+
+```ts lib/utils
+import bcrypt from "bcryptjs";
+const SALT_ROUNDS = 10;
+const hashPassword = async (password: string) => {
+  return await bcrypt.hash(password, SALT_ROUNDS);
+};
+```
+
+```ts sign-up/_services/use-sign-up-mutations.ts
+import { signUp } from "@/app/(auth)/sign-up/_services/sign-up-mutations";
+import { SignUpSchema } from "@/app/(auth)/sign-up/_types/signUpSchema";
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
+const useSignUp = () => {
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: async (data: SignUpSchema) => {
+      await signUp(data);
+    },
+    onSuccess: () => {
+      toast.success("Signed up successfully.");
+      router.replace("/sign-in");
+    },
+  });
+};
+
+export { useSignUp };
+```
+
+```tsx sign-up-form.tsx
+"use client";
+import { useSignUp } from "@/app/(auth)/sign-up/_services/use-sign-up-mutations";
+import {
+  signUpDefaultValues,
+  signUpSchema,
+  SignUpSchema,
+} from "@/app/(auth)/sign-up/_types/signUpSchema";
+import { Button } from "@/components/ui/button";
+import { ControlledInput } from "@/components/ui/controlled-input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+
+const SignUpForm = () => {
+  const form = useForm<SignUpSchema>({
+    defaultValues: signUpDefaultValues,
+    resolver: zodResolver(signUpSchema),
+  });
+
+  const signUpMutation = useSignUp();
+
+  const onSubmit: SubmitHandler<SignUpSchema> = (data) => {
+    signUpMutation.mutate(data);
+  };
+
+  return (
+    <FormProvider {...form}>
+      <form
+        className="w-full max-w-96 space-y-5 rounded-md border px-10 py-12"
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
+        <div className="text-center">
+          <h2 className="mb-1 text-2xl font-semibold">Create Account</h2>
+          <p className="text-muted-foreground text-sm">
+            Sign up to get started
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <ControlledInput<SignUpSchema> name="name" label="Full Name" />
+          <ControlledInput<SignUpSchema> name="email" label="Email" />
+          <ControlledInput<SignUpSchema>
+            name="password"
+            label="Password"
+            type="password"
+          />
+          <ControlledInput<SignUpSchema>
+            name="confirmPassword"
+            label="Confirm Password"
+            type="password"
+          />
+        </div>
+
+        <Button className="w-full" isLoading={signUpMutation.isPending}>
+          Sign Up
+        </Button>
+
+        <div className="text-center text-sm">
+          Already have an account?{" "}
+          <Link
+            href="/sign-in"
+            className="text-primary font-medium hover:underline"
+          >
+            Sign in
+          </Link>
+        </div>
+      </form>
+    </FormProvider>
+  );
+};
+
+export { SignUpForm };
+```
+
+```ts sign-in/_types/signInSchema.ts
+import { z } from "zod";
+
+const signInSchema = z.object({
+  email: z.string().email(),
+  password: z.string(),
+});
+
+type SignInSchema = z.infer<typeof signInSchema>;
+
+const signInDefaultValues: SignInSchema = {
+  email: "",
+  password: "",
+};
+
+export { signInDefaultValues, signInSchema, type SignInSchema };
+```
+
+```ts lib/auth.ts
+import db from "@/lib/db";
+import { comparePassword, toNumberSafe, toStringSafe } from "@/lib/utils";
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import { signInSchema } from "@/app/(auth)/sign-in/_types/signInSchema";
+
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  providers: [
+    Credentials({
+      credentials: {
+        email: {},
+        password: {},
+      },
+      authorize: async (credentials) => {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Email and password are required");
+        }
+
+        const validatedCredentials = signInSchema.parse(credentials);
+
+        const user = await db.user.findUnique({
+          where: {
+            email: validatedCredentials.email,
+          },
+        });
+
+        if (!user) {
+          throw new Error("Invalid email or password");
+        }
+
+        const isPasswordValid = await comparePassword(
+          validatedCredentials.password,
+          user.password,
+        );
+
+        if (!isPasswordValid) {
+          throw new Error("Invalid email or password");
+        }
+
+        return {
+          id: toStringSafe(user.id),
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        };
+      },
+    }),
+  ],
+  pages: {
+    signIn: "/sign-in",
+  },
+
+  callbacks: {
+    jwt({ token, user }) {
+      const clonedToken = token;
+      if (user) {
+        clonedToken.id = toNumberSafe(user.id);
+        clonedToken.name = user?.name;
+        clonedToken.role = user?.role;
+      }
+      return clonedToken;
+    },
+    session({ session, token }) {
+      const clonedSession = session;
+
+      if (clonedSession.user) {
+        clonedSession.user.id = toStringSafe(token.id);
+        clonedSession.user.name = token.name;
+        clonedSession.user.role = token.role;
+      }
+
+      return clonedSession;
+    },
+  },
+});
+```
+
+```ts lib/types/next-auth.d.ts
+import { DefaultSession, DefaultUser } from "next-auth";
+import { DefaultJWT } from "next-auth/jwt";
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      role: string;
+    } & DefaultSession["user"];
+  }
+
+  interface User extends DefaultUser {
+    role: string;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT extends DefaultJWT {
+    id: string | number;
+    role: string;
+  }
+}
+```
+
+```ts app/api/auth/[...nextauth]/route.ts
+import { handlers } from "@/lib/auth";
+export const { GET, POST } = handlers;
+```
+
+`npx auth secret`
+
+```ts lib/utils.ts
+const comparePassword = async (password: string, hashedPassword: string) => {
+  return await bcrypt.compare(password, hashedPassword);
+};
+```
+
+```ts sign-in/_services/sign-in-mutations.ts
+"use server";
+import {
+  signInSchema,
+  SignInSchema,
+} from "@/app/(auth)/sign-in/_types/signInSchema";
+import { signIn as nextAuthSignIn, signOut as authSignOut } from "@/lib/auth";
+import { executeAction } from "@/lib/executeAction";
+
+const signIn = async (data: SignInSchema) => {
+  await executeAction({
+    actionFn: async () => {
+      const validatedData = signInSchema.parse(data);
+      await nextAuthSignIn("credentials", validatedData);
+    },
+  });
+};
+
+const signOut = () => {
+  return executeAction({
+    actionFn: authSignOut,
+  });
+};
+
+export { signIn, signOut };
+```
+
+```tsx use-sign-in-mutations.tsx
+import {
+  signIn,
+  signOut,
+} from "@/app/(auth)/sign-in/_services/sign-in-mutations";
+import { SignInSchema } from "@/app/(auth)/sign-in/_types/signInSchema";
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+
+const useSignIn = () => {
+  return useMutation({
+    mutationFn: async (data: SignInSchema) => {
+      await signIn(data);
+    },
+  });
+};
+
+const useSignOut = () => {
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: signOut,
+    onSuccess: () => {
+      router.push("/sign-in");
+    },
+  });
+};
+
+export { useSignIn, useSignOut };
+```
+
+```tsx sign-in/_components/sign-in-form.tsx
+"use client";
+import { useSignIn } from "@/app/(auth)/sign-in/_services/use-sign-in-mutations";
+import {
+  signInDefaultValues,
+  signInSchema,
+  SignInSchema,
+} from "@/app/(auth)/sign-in/_types/signInSchema";
+import { Button } from "@/components/ui/button";
+import { ControlledInput } from "@/components/ui/controlled-input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+
+const SignInForm = () => {
+  const form = useForm<SignInSchema>({
+    defaultValues: signInDefaultValues,
+    resolver: zodResolver(signInSchema),
+  });
+
+  const signInMutation = useSignIn();
+
+  const onSubmit: SubmitHandler<SignInSchema> = (data) => {
+    signInMutation.mutate(data);
+  };
+
+  return (
+    <FormProvider {...form}>
+      <form
+        className="w-full max-w-96 space-y-5 rounded-md border px-10 py-12"
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
+        <div className="text-center">
+          <h2 className="mb-1 text-2xl font-semibold">Welcome Back</h2>
+          <p className="text-muted-foreground text-sm">
+            Sign in to your account
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <ControlledInput<SignInSchema> name="email" label="Email" />
+          <ControlledInput<SignInSchema>
+            name="password"
+            label="Password"
+            type="password"
+          />
+        </div>
+
+        <Button className="w-full" isLoading={signInMutation.isPending}>
+          Sign In
+        </Button>
+
+        <div className="text-center text-sm">
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/sign-up"
+            className="text-primary font-medium hover:underline"
+          >
+            Sign up
+          </Link>
+        </div>
+      </form>
+    </FormProvider>
+  );
+};
+
+export { SignInForm };
+```
+
+```tsx sign-in/page.tsx
+import { Role } from "$/generated/prisma";
+import { SignInForm } from "@/app/(auth)/sign-in/_components/sign-in-form";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+
+const Page = async () => {
+  const session = await auth();
+  if (session?.user?.role === Role.ADMIN)
+    redirect("/admin/foods-management/foods");
+  if (session?.user?.role === Role.USER) redirect("/client");
+
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <SignInForm />
+    </div>
+  );
+};
+
+export default Page;
+```
+
+```tsx sign-up/page.tsx
+import { Role } from "$/generated/prisma";
+import { SignUpForm } from "@/app/(auth)/sign-up/_components/sign-up-form";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+
+const Page = async () => {
+  const session = await auth();
+  if (session?.user?.role === Role.ADMIN)
+    redirect("/admin/foods-management/foods");
+  if (session?.user?.role === Role.USER) redirect("/client");
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <SignUpForm />
+    </div>
+  );
+};
+
+export default Page;
+```
+
+```tsx providers.tsx
+const queryClient = new QueryClient({
+  defaultOptions: {
+    mutations: {
+      onError: (e) => {
+        if (e.message === "NEXT_REDIRECT") return;
+        toast.error(e.message);
+      },
+      onSuccess: () => {
+        toast.error("Operation was successful.");
+      },
+    },
+  },
+});
+```
+
+show sign in sign up
+
+```ts prisma/seed.ts
+import { PrismaClient, Role } from "$/generated/prisma";
+import * as bcrypt from "bcryptjs";
+
+const prisma = new PrismaClient();
+
+async function main() {
+  const adminEmail = "super@admin.com";
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: adminEmail },
+  });
+
+  if (!existingAdmin) {
+    const hashedPassword = await bcrypt.hash("1234", 10);
+
+    const admin = await prisma.user.create({
+      data: {
+        name: "Super Admin",
+        email: adminEmail,
+        password: hashedPassword,
+        role: Role.ADMIN,
+      },
+    });
+
+    console.log(`Created admin user: ${admin.name} (${admin.email})`);
+  } else {
+    console.log(`Admin user already exists: ${existingAdmin.email}`);
+  }
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+```
+
+`npm i --save-dev tsx`
+
+```json package.json
+    "db:seed": "tsx prisma/seed.ts"
+```
+
+run it login with super admin
+
+```tsx dashboard-layout.tsx
+type DashboardLayoutProps = { children: ReactNode; session: Session };
+
+const DashboardLayout = ({ children, session }: DashboardLayoutProps) => {
+  const [open, setOpen] = useState(false);
+  const signOutMutation = useSignOut();
+  const userRole = session.user?.role || "user";
+
+  const filteredRouteGroups = ROUTE_GROUPS.filter((group) => {
+    if (userRole === "admin") {
+      return group.group === "Foods Management";
+    } else {
+      return group.group === "Meals Management";
+    }
+  });
+
+  const handleLogout = () => {
+    signOutMutation.mutate();
+  };
+
+  return (
+    <div className="flex">
+      <div className="bg-background h-13 fixed z-10 flex w-screen items-center justify-between border px-2">
+        <Collapsible.Root className="h-full" open={open} onOpenChange={setOpen}>
+          <Collapsible.Trigger className="m-2" asChild>
+            <Button size="icon" variant="outline">
+              <Menu />
+            </Button>
+          </Collapsible.Trigger>
+        </Collapsible.Root>
+        <div className="flex">
+          <ThemeToggle />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="flex h-9 items-center gap-2 px-2"
+              >
+                <Avatar className="size-8">
+                  <AvatarFallback>A</AvatarFallback>
+                </Avatar>
+                <span className="hidden md:inline">Admin</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <div className="flex items-center gap-3 px-2 py-1.5">
+                <Avatar className="size-10">
+                  <AvatarFallback>A</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium">Admin</p>
+                  <p className="text-muted-foreground text-xs">
+                    admin@test.com
+                  </p>
+                </div>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} variant="destructive">
+                <LogOut className="size-4" /> Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <Collapsible.Root
+        className="fixed left-0 top-0 z-20 h-dvh"
+        open={open}
+        onOpenChange={setOpen}
+      >
+        <Collapsible.Content forceMount>
+          <div
+            className={`bg-background fixed left-0 top-0 h-screen w-64 border p-4 transition-transform duration-300 ${
+              open ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <h1 className="font-semibold">Admin Dashboard</h1>
+              <Collapsible.Trigger asChild>
+                <Button size="icon" variant="outline">
+                  <ChevronLeft />
+                </Button>
+              </Collapsible.Trigger>
+            </div>
+            <Separator className="my-2" />
+            <div className="mt-4 flex flex-col">
+              {filteredRouteGroups.map((routeGroup) => (
+                <RouteGroup {...routeGroup} key={routeGroup.group} />
+              ))}
+            </div>
+          </div>
+        </Collapsible.Content>
+      </Collapsible.Root>
+
+      <main
+        className={`transition-margin mt-13 flex-1 p-4 duration-300 ${
+          open ? "ml-64" : "ml-0"
+        }`}
+      >
+        {children}
+      </main>
+    </div>
+  );
+};
+```
+
+```tsx (dashboard)/layout.tsx
+import { DashboardLayout } from "@/app/(dashboard)/_components/dashboard-layout";
+import { ReactNode } from "react";
+
+type LayoutProps = {
+  children: ReactNode;
+};
+const Layout = ({ children }: LayoutProps) => {
+  return <DashboardLayout>{children}</DashboardLayout>;
+};
+
+export default Layout;
+```
+
+show logout
+
+```ts client/_types/mealSchema.ts
+import { patterns } from "@/lib/constants";
+import { regexSchema, requiredStringSchema } from "@/lib/zodSchemas";
+import { z } from "zod";
+
+const mealSchema = z.intersection(
+  z.object({
+    userId: requiredStringSchema,
+    dateTime: z.date(),
+    mealFoods: z.array(
+      z.object({
+        foodId: requiredStringSchema,
+        servingUnitId: requiredStringSchema,
+        amount: regexSchema(patterns.zeroTo9999),
+      }),
+    ),
+  }),
+  z.discriminatedUnion("action", [
+    z.object({ action: z.literal("create") }),
+    z.object({ action: z.literal("update"), id: z.number() }),
+  ]),
+);
+
+type MealSchema = z.infer<typeof mealSchema>;
+
+const mealDefaultValues: MealSchema = {
+  action: "create",
+  dateTime: new Date(),
+  mealFoods: [],
+  userId: "",
+};
+
+export { mealDefaultValues, mealSchema, type MealSchema };
+```
+
+```ts client/_types/mealFilterSchema.ts
+import { z } from "zod";
+
+const mealFiltersSchema = z.object({
+  dateTime: z.coerce.date(),
+});
+
+type MealFiltersSchema = z.infer<typeof mealFiltersSchema>;
+
+const mealFiltersDefaultValues: MealFiltersSchema = {
+  dateTime: new Date(),
+};
+
+export { mealFiltersDefaultValues, mealFiltersSchema, type MealFiltersSchema };
+```
+
+```ts meals/_services/mealQueries.ts
+"use server";
+
+import {
+  mealFiltersSchema,
+  MealFiltersSchema,
+} from "@/app/(dashboard)/client/_types/mealFilterSchema";
+import { MealSchema } from "@/app/(dashboard)/client/_types/mealSchema";
+import { auth } from "@/lib/auth";
+import db from "@/lib/db";
+import { toStringSafe } from "@/lib/utils";
+import { Prisma } from "@prisma/client";
+
+const getMeals = async (filters: MealFiltersSchema) => {
+  const validatedFilters = mealFiltersSchema.parse(filters);
+
+  const session = await auth();
+
+  const { dateTime } = validatedFilters || {};
+
+  const where: Prisma.MealWhereInput = {};
+
+  if (dateTime !== undefined) {
+    const startDate = new Date(dateTime);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(dateTime);
+    endDate.setHours(23, 59, 59, 999);
+    where.dateTime = {
+      gte: startDate,
+      lte: endDate,
+    };
+  }
+
+  if (session?.user?.id) {
+    where.userId = {
+      equals: +session.user.id,
+    };
+  }
+
+  const data = await db.meal.findMany({
+    where,
+    orderBy: { dateTime: "desc" },
+    include: {
+      mealFoods: {
+        include: {
+          food: true,
+          servingUnit: true,
+        },
+      },
+    },
+  });
+
+  return data;
+};
+
+const getMeal = async (id: number): Promise<MealSchema | null> => {
+  const res = await db.meal.findFirst({
+    where: { id },
+    include: {
+      mealFoods: true,
+    },
+  });
+
+  if (!res) return null;
+
+  return {
+    action: "update" as const,
+    id,
+    dateTime: res.dateTime,
+    userId: toStringSafe(res.userId),
+    mealFoods:
+      res.mealFoods.map((item) => ({
+        foodId: toStringSafe(item.foodId),
+        amount: toStringSafe(item.amount),
+        servingUnitId: toStringSafe(item.servingUnitId),
+      })) ?? [],
+  };
+};
+
+export { getMeal, getMeals };
 ```

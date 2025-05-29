@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Session } from "next-auth";
+import { useSignOut } from "@/app/(auth)/sign-in/_services/use-sign-in-mutations";
 
 type RouteGroupType = {
   group: string;
@@ -122,14 +124,28 @@ const RouteGroup = ({ group, items }: RouteGroupProps) => {
   );
 };
 
-type DashboardLayoutProps = { children: ReactNode };
+type DashboardLayoutProps = { children: ReactNode; session: Session };
 
-const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+const DashboardLayout = ({ children, session }: DashboardLayoutProps) => {
   const [open, setOpen] = useState(false);
+  const signOutMutation = useSignOut();
+  const userRole = session.user?.role || "user";
+
+  const filteredRouteGroups = ROUTE_GROUPS.filter((group) => {
+    if (userRole === "admin") {
+      return group.group === "Foods Management";
+    } else {
+      return group.group === "Meals Management";
+    }
+  });
+
+  const handleLogout = () => {
+    signOutMutation.mutate();
+  };
 
   return (
     <div className="flex">
-      <div className="bg-background fixed z-10 flex h-13 w-screen items-center justify-between border px-2">
+      <div className="bg-background h-13 fixed z-10 flex w-screen items-center justify-between border px-2">
         <Collapsible.Root className="h-full" open={open} onOpenChange={setOpen}>
           <Collapsible.Trigger className="m-2" asChild>
             <Button size="icon" variant="outline">
@@ -166,12 +182,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 </div>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {
-                  // logout login
-                }}
-                variant="destructive"
-              >
+              <DropdownMenuItem onClick={handleLogout} variant="destructive">
                 <LogOut className="size-4" /> Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -180,13 +191,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </div>
 
       <Collapsible.Root
-        className="fixed top-0 left-0 z-20 h-dvh"
+        className="fixed left-0 top-0 z-20 h-dvh"
         open={open}
         onOpenChange={setOpen}
       >
         <Collapsible.Content forceMount>
           <div
-            className={`bg-background fixed top-0 left-0 h-screen w-64 border p-4 transition-transform duration-300 ${
+            className={`bg-background fixed left-0 top-0 h-screen w-64 border p-4 transition-transform duration-300 ${
               open ? "translate-x-0" : "-translate-x-full"
             }`}
           >
@@ -200,7 +211,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </div>
             <Separator className="my-2" />
             <div className="mt-4 flex flex-col">
-              {ROUTE_GROUPS.map((routeGroup) => (
+              {filteredRouteGroups.map((routeGroup) => (
                 <RouteGroup {...routeGroup} key={routeGroup.group} />
               ))}
             </div>
