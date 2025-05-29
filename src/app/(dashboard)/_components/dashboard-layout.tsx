@@ -28,6 +28,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Session } from "next-auth";
 import { useSignOut } from "@/app/(auth)/sign-in/_services/use-sign-in-mutations";
+import { customErrorMap } from "@/lib/customErrorMap";
+import { z } from "zod";
+import { Role } from "$/generated/prisma";
+
+z.setErrorMap(customErrorMap);
 
 type RouteGroupType = {
   group: string;
@@ -129,10 +134,10 @@ type DashboardLayoutProps = { children: ReactNode; session: Session };
 const DashboardLayout = ({ children, session }: DashboardLayoutProps) => {
   const [open, setOpen] = useState(false);
   const signOutMutation = useSignOut();
-  const userRole = session.user?.role || "user";
+  const userRole = session.user?.role || Role.USER;
 
   const filteredRouteGroups = ROUTE_GROUPS.filter((group) => {
-    if (userRole === "admin") {
+    if (userRole === Role.ADMIN) {
       return group.group === "Foods Management";
     } else {
       return group.group === "Meals Management";
@@ -145,7 +150,7 @@ const DashboardLayout = ({ children, session }: DashboardLayoutProps) => {
 
   return (
     <div className="flex">
-      <div className="bg-background h-13 fixed z-10 flex w-screen items-center justify-between border px-2">
+      <div className="bg-background fixed z-10 flex h-13 w-screen items-center justify-between border px-2">
         <Collapsible.Root className="h-full" open={open} onOpenChange={setOpen}>
           <Collapsible.Trigger className="m-2" asChild>
             <Button size="icon" variant="outline">
@@ -155,49 +160,51 @@ const DashboardLayout = ({ children, session }: DashboardLayoutProps) => {
         </Collapsible.Root>
         <div className="flex">
           <ThemeToggle />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="flex h-9 items-center gap-2 px-2"
-              >
-                <Avatar className="size-8">
-                  <AvatarFallback>A</AvatarFallback>
-                </Avatar>
-                <span className="hidden md:inline">Admin</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="flex items-center gap-3 px-2 py-1.5">
-                <Avatar className="size-10">
-                  <AvatarFallback>A</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">Admin</p>
-                  <p className="text-muted-foreground text-xs">
-                    admin@test.com
-                  </p>
+          {session && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex h-9 items-center gap-2 px-2"
+                >
+                  <Avatar className="size-8">
+                    <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <span className="hidden md:inline">{session.user?.name}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <div className="flex items-center gap-3 px-2 py-1.5">
+                  <Avatar className="size-10">
+                    <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium">{session.user?.name}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {session.user?.email}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} variant="destructive">
-                <LogOut className="size-4" /> Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} variant="destructive">
+                  <LogOut className="size-4" /> Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
       <Collapsible.Root
-        className="fixed left-0 top-0 z-20 h-dvh"
+        className="fixed top-0 left-0 z-20 h-dvh"
         open={open}
         onOpenChange={setOpen}
       >
         <Collapsible.Content forceMount>
           <div
-            className={`bg-background fixed left-0 top-0 h-screen w-64 border p-4 transition-transform duration-300 ${
+            className={`bg-background fixed top-0 left-0 h-screen w-64 border p-4 transition-transform duration-300 ${
               open ? "translate-x-0" : "-translate-x-full"
             }`}
           >

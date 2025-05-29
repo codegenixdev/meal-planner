@@ -1,7 +1,3 @@
-todo: make avatar data real
-why normal user can see admin pages
-correct redirection when logged in and when not
-
 `npx create-next-app@latest .`
 
 remove not required files and folder (all things in public, styles and remove code from layout and page)
@@ -187,6 +183,78 @@ it won't let us
 show that easily access db
 
 `npx shadcn@latest init (slate)`
+
+```css globals.css
+:root {
+  --radius: 0.5rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --primary: oklch(0.723 0.219 149.579);
+  --primary-foreground: oklch(0.982 0.018 155.826);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.723 0.219 149.579);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.141 0.005 285.823);
+  --sidebar-primary: oklch(0.723 0.219 149.579);
+  --sidebar-primary-foreground: oklch(0.982 0.018 155.826);
+  --sidebar-accent: oklch(0.967 0.001 286.375);
+  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-border: oklch(0.92 0.004 286.32);
+  --sidebar-ring: oklch(0.723 0.219 149.579);
+}
+
+.dark {
+  --background: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.696 0.17 162.48);
+  --primary-foreground: oklch(0.393 0.095 152.535);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.527 0.154 150.069);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.21 0.006 285.885);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.696 0.17 162.48);
+  --sidebar-primary-foreground: oklch(0.393 0.095 152.535);
+  --sidebar-accent: oklch(0.274 0.006 286.033);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.527 0.154 150.069);
+}
+```
+
 `npx shadcn@latest add button`
 `npx shadcn@latest add dropdown-menu`
 `npm install @radix-ui/react-collapsible`
@@ -801,7 +869,6 @@ const executeAction = async <T>({ actionFn }: Options<T>) => {
 };
 
 export { executeAction };
-
 ```
 
 ```categories/_services/categoryMutations.ts
@@ -1116,6 +1183,75 @@ now import it in category cards component
 now create a new category in db and show alert works
 
 `npm i zod`
+
+```ts lib/customErrorMap.ts
+import { z } from "zod";
+
+const customErrorMap: z.ZodErrorMap = (issue, ctx) => {
+  switch (issue.code) {
+    case z.ZodIssueCode.invalid_type:
+      if (issue.received === "undefined" || issue.received === "null") {
+        return { message: "This field is required" };
+      }
+      if (issue.expected === "string") {
+        return { message: "Please enter text" };
+      }
+      if (issue.expected === "number") {
+        return { message: "Please enter a number" };
+      }
+      return { message: `Invalid value type` };
+
+    case z.ZodIssueCode.too_small:
+      if (issue.type === "string") {
+        return { message: `Minimum ${issue.minimum} characters required` };
+      }
+      if (issue.type === "number") {
+        return {
+          message: `Number must be greater than or equal to ${issue.minimum}`,
+        };
+      }
+      return { message: `Value is too small` };
+
+    case z.ZodIssueCode.too_big:
+      if (issue.type === "string") {
+        return { message: `Maximum ${issue.maximum} characters allowed` };
+      }
+      if (issue.type === "number") {
+        return {
+          message: `Number must be less than or equal to ${issue.maximum}`,
+        };
+      }
+      return { message: `Value is too large` };
+
+    case z.ZodIssueCode.invalid_string:
+      if (issue.validation === "email") {
+        return { message: "Please enter a valid email address" };
+      }
+      if (issue.validation === "url") {
+        return { message: "Please enter a valid URL" };
+      }
+      return { message: "Invalid text format" };
+
+    case z.ZodIssueCode.invalid_date:
+      return { message: "Please enter a valid date" };
+
+    case z.ZodIssueCode.custom:
+      return { message: issue.message || "Invalid value" };
+
+    default:
+      return { message: ctx.defaultError };
+  }
+};
+
+export { customErrorMap };
+```
+
+above dashboard-layout.tsx
+
+```ts
+import { z } from "zod";
+z.setErrorMap(customErrorMap);
+```
 
 ```categories/_types/categorySchema.ts
 import { z } from "zod";
@@ -1767,7 +1903,7 @@ const CategoryCards = () => {
   const deleteCategoryMutation = useDeleteCategory();
 
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-4">
       {categoriesQuery.isLoading ? (
         <CategoryCardsSkeleton />
       ) : (
@@ -3763,10 +3899,10 @@ type DashboardLayoutProps = { children: ReactNode; session: Session };
 const DashboardLayout = ({ children, session }: DashboardLayoutProps) => {
   const [open, setOpen] = useState(false);
   const signOutMutation = useSignOut();
-  const userRole = session.user?.role || "user";
+  const userRole = session.user?.role || Role.USER;
 
   const filteredRouteGroups = ROUTE_GROUPS.filter((group) => {
-    if (userRole === "admin") {
+    if (userRole === Role.ADMIN) {
       return group.group === "Foods Management";
     } else {
       return group.group === "Meals Management";
@@ -3779,7 +3915,7 @@ const DashboardLayout = ({ children, session }: DashboardLayoutProps) => {
 
   return (
     <div className="flex">
-      <div className="bg-background h-13 fixed z-10 flex w-screen items-center justify-between border px-2">
+      <div className="bg-background fixed z-10 flex h-13 w-screen items-center justify-between border px-2">
         <Collapsible.Root className="h-full" open={open} onOpenChange={setOpen}>
           <Collapsible.Trigger className="m-2" asChild>
             <Button size="icon" variant="outline">
@@ -3789,49 +3925,51 @@ const DashboardLayout = ({ children, session }: DashboardLayoutProps) => {
         </Collapsible.Root>
         <div className="flex">
           <ThemeToggle />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="flex h-9 items-center gap-2 px-2"
-              >
-                <Avatar className="size-8">
-                  <AvatarFallback>A</AvatarFallback>
-                </Avatar>
-                <span className="hidden md:inline">Admin</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="flex items-center gap-3 px-2 py-1.5">
-                <Avatar className="size-10">
-                  <AvatarFallback>A</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">Admin</p>
-                  <p className="text-muted-foreground text-xs">
-                    admin@test.com
-                  </p>
+          {session && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex h-9 items-center gap-2 px-2"
+                >
+                  <Avatar className="size-8">
+                    <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <span className="hidden md:inline">{session.user?.name}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <div className="flex items-center gap-3 px-2 py-1.5">
+                  <Avatar className="size-10">
+                    <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium">{session.user?.name}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {session.user?.email}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} variant="destructive">
-                <LogOut className="size-4" /> Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} variant="destructive">
+                  <LogOut className="size-4" /> Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
       <Collapsible.Root
-        className="fixed left-0 top-0 z-20 h-dvh"
+        className="fixed top-0 left-0 z-20 h-dvh"
         open={open}
         onOpenChange={setOpen}
       >
         <Collapsible.Content forceMount>
           <div
-            className={`bg-background fixed left-0 top-0 h-screen w-64 border p-4 transition-transform duration-300 ${
+            className={`bg-background fixed top-0 left-0 h-screen w-64 border p-4 transition-transform duration-300 ${
               open ? "translate-x-0" : "-translate-x-full"
             }`}
           >
@@ -3874,6 +4012,23 @@ type LayoutProps = {
 };
 const Layout = ({ children }: LayoutProps) => {
   return <DashboardLayout>{children}</DashboardLayout>;
+};
+
+export default Layout;
+```
+
+```tsx admin/layout.tsx
+import { Role } from "$/generated/prisma";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { ReactNode } from "react";
+
+type LayoutProps = { children: ReactNode };
+const Layout = async ({ children }: LayoutProps) => {
+  const session = await auth();
+  if (!session) redirect("/sign-in");
+  if (session.user?.role === Role.USER) redirect("/client");
+  return <div className="mx-auto max-w-7xl p-6">{children}</div>;
 };
 
 export default Layout;
@@ -5006,3 +5161,45 @@ const Page = async () => {
 
 export default Page;
 ```
+
+```tsx app/page.tsx
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import Link from "next/link";
+
+export default function Page() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
+      <div className="flex w-full max-w-6xl flex-col items-center gap-8 md:flex-row md:gap-12">
+        <div className="flex flex-1 flex-col gap-6 text-center md:text-left">
+          <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">
+            Smart Meal Planner
+          </h1>
+          <p className="max-w-lg text-xl text-slate-700">
+            Plan your meals, track your nutrition, and achieve your health goals
+          </p>
+          <div className="mt-2">
+            <Link href="/sign-in">
+              <Button size="lg" className="px-8 py-6 text-lg font-medium">
+                Get Started
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        <div className="flex flex-1 justify-center">
+          <Image
+            src="/hero.png"
+            alt="Meal planning illustration"
+            width={500}
+            height={400}
+            className="rounded-xl shadow-lg"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+put hero.png in public folder
