@@ -2390,3 +2390,745 @@ const useDeleteFood = () => {
 
 export { useCreateFood, useDeleteFood, useUpdateFood };
 ```
+
+```ts foods/_components/food-form-dialog.tsx
+
+"use client";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+import { Plus } from "lucide-react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+
+import { useFoodsStore } from "@/app/(dashboard)/admin/foods-management/foods/_libs/use-food-store";
+import {
+  useCreateFood,
+  useUpdateFood,
+} from "@/app/(dashboard)/admin/foods-management/foods/_services/use-food-mutations";
+import { useFood } from "@/app/(dashboard)/admin/foods-management/foods/_services/use-food-queries";
+import {
+  foodDefaultValues,
+  foodSchema,
+  FoodSchema,
+} from "@/app/(dashboard)/admin/foods-management/foods/_types/foodSchema";
+import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import { ControlledSelect } from "@/components/ui/controlled-select";
+import { SpecifyFoodServingUnits } from "@/app/(dashboard)/admin/foods-management/foods/_components/specify-food-serving-units";
+import { CategoryFormDialog } from "@/app/(dashboard)/admin/foods-management/categories/_components/category-form-dialog";
+import { ControlledInput } from "@/components/ui/controlled-input";
+import { useCategories } from "@/app/(dashboard)/admin/foods-management/categories/_services/use-category-queries";
+import { useServingUnitsStore } from "@/app/(dashboard)/admin/foods-management/serving-units/_libs/use-serving-unit-store";
+import { useCategoriesStore } from "@/app/(dashboard)/admin/foods-management/categories/_libs/use-category-store";
+
+const FoodFormDialog = () => {
+  const form = useForm<FoodSchema>({
+    defaultValues: foodDefaultValues,
+    resolver: zodResolver(foodSchema),
+  });
+
+  const foodQuery = useFood();
+  const categoriesQuery = useCategories();
+
+  const createFoodMutation = useCreateFood();
+  const updateFoodMutation = useUpdateFood();
+
+  const isPending =
+    createFoodMutation.isPending || updateFoodMutation.isPending;
+
+  const {
+    selectedFoodId,
+    updateSelectedFoodId,
+    foodDialogOpen,
+    updateFoodDialogOpen,
+  } = useFoodsStore();
+
+  const { categoryDialogOpen } = useCategoriesStore();
+  const { servingUnitDialogOpen } = useServingUnitsStore();
+
+  useEffect(() => {
+    if (!!selectedFoodId && foodQuery.data) {
+      form.reset(foodQuery.data);
+    }
+  }, [foodQuery.data, form, selectedFoodId]);
+
+  const handleDialogOpenChange = (open: boolean) => {
+    updateFoodDialogOpen(open);
+
+    if (!open) {
+      updateSelectedFoodId(null);
+      form.reset(foodDefaultValues);
+    }
+  };
+
+  const handleSuccess = () => {
+    handleDialogOpenChange(false);
+  };
+
+  const disabledSubmit = servingUnitDialogOpen || categoryDialogOpen;
+
+  const onSubmit: SubmitHandler<FoodSchema> = (data) => {
+    if (data.action === "create") {
+      createFoodMutation.mutate(data, {
+        onSuccess: handleSuccess,
+      });
+    } else {
+      updateFoodMutation.mutate(data, { onSuccess: handleSuccess });
+    }
+  };
+
+  return (
+    <Dialog open={foodDialogOpen} onOpenChange={handleDialogOpenChange}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="mr-2" />
+          New Food
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-2xl">
+            {selectedFoodId ? "Edit Food" : "Create a New Food"}
+          </DialogTitle>
+        </DialogHeader>
+        <form
+          onSubmit={disabledSubmit ? undefined : form.handleSubmit(onSubmit)}
+          className="space-y-6"
+        >
+          <FormProvider {...form}>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-1 grid">
+                <ControlledInput<FoodSchema>
+                  name="name"
+                  label="Name"
+                  placeholder="Enter food name"
+                />
+              </div>
+
+              <div className="col-span-1 flex items-end">
+                <ControlledSelect<FoodSchema>
+                  label="Category"
+                  name="categoryId"
+                  options={categoriesQuery.data?.map((item) => ({
+                    label: item.name,
+                    value: item.id,
+                  }))}
+                />
+                <CategoryFormDialog smallTrigger />
+              </div>
+
+              <div>
+                <ControlledInput<FoodSchema>
+                  name="calories"
+                  label="Calories"
+                  type="number"
+                  placeholder="kcal"
+                />
+              </div>
+              <div>
+                <ControlledInput<FoodSchema>
+                  name="protein"
+                  label="Protein"
+                  type="number"
+                  placeholder="grams"
+                />
+              </div>
+              <div>
+                <ControlledInput<FoodSchema>
+                  name="carbohydrates"
+                  label="Carbohydrates"
+                  type="number"
+                  placeholder="grams"
+                />
+              </div>
+              <div>
+                <ControlledInput<FoodSchema>
+                  name="fat"
+                  label="Fat"
+                  type="number"
+                  placeholder="grams"
+                />
+              </div>
+              <div>
+                <ControlledInput<FoodSchema>
+                  name="fiber"
+                  label="Fiber"
+                  type="number"
+                  placeholder="grams"
+                />
+              </div>
+              <div>
+                <ControlledInput<FoodSchema>
+                  name="sugar"
+                  label="Sugar"
+                  type="number"
+                  placeholder="grams"
+                />
+              </div>
+              <div className="col-span-2">
+                <SpecifyFoodServingUnits />
+              </div>
+            </div>
+          </FormProvider>
+          <DialogFooter>
+            <Button type="submit" isLoading={isPending}>
+              {!!selectedFoodId ? "Edit" : "Create"} Food
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export { FoodFormDialog };
+
+```
+
+`npx shadcn@latest add select`
+
+```ts components/ui/controlled-select.tsx
+"use client";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ValueLabel } from "@/lib/types/valueLabel";
+import { X } from "lucide-react";
+import { Controller, FieldValues, Path, useFormContext } from "react-hook-form";
+
+type SelectProps<T extends FieldValues> = {
+  name: Path<T>;
+  label: string;
+  options?: ValueLabel[];
+  placeholder?: string;
+  clearable?: boolean;
+};
+const ControlledSelect = <T extends FieldValues>({
+  label,
+  name,
+  options = [],
+  placeholder,
+  clearable,
+}: SelectProps<T>) => {
+  const { control } = useFormContext<T>();
+  return (
+    <div className="w-full">
+      {!!label && (
+        <Label className="mb-2" htmlFor={name}>
+          {label}
+        </Label>
+      )}
+      <Controller
+        name={name}
+        control={control}
+        render={({
+          field: { onChange, ...restField },
+          fieldState: { error },
+        }) => (
+          <>
+            <Select onValueChange={onChange} {...restField}>
+              <div className="relative flex">
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={placeholder} />
+                </SelectTrigger>
+                {clearable && !!restField.value && (
+                  <Button
+                    variant="ghost"
+                    className="text-foreground/40 hover:bg-accent/0 absolute top-1/2 right-8 size-4 -translate-y-1/2"
+                    size="icon"
+                    onClick={() => {
+                      onChange("");
+                    }}
+                  >
+                    <X />
+                  </Button>
+                )}
+              </div>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>{label}</SelectLabel>
+                  {options.map((item) => (
+                    <SelectItem value={item.value.toString()} key={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+
+            {!!error && (
+              <p className="text-destructive text-sm">{error.message}</p>
+            )}
+          </>
+        )}
+      />
+    </div>
+  );
+};
+
+export { ControlledSelect };
+
+
+```
+
+```ts lib/types/valueLabel.ts
+type ValueLabel = {
+  value: string | number;
+  label: string;
+};
+
+export { type ValueLabel };
+```
+
+```ts foods/_components/specify-food-serving-units.tsx
+import { FoodSchema } from "@/app/(dashboard)/admin/foods-management/foods/_types/foodSchema";
+import { ServingUnitFormDialog } from "@/app/(dashboard)/admin/foods-management/serving-units/_components/serving-unit-form-dialog";
+import { useServingUnits } from "@/app/(dashboard)/admin/foods-management/serving-units/_services/use-serving-unit-queries";
+import { Button } from "@/components/ui/button";
+import { ControlledInput } from "@/components/ui/controlled-input";
+import { ControlledSelect } from "@/components/ui/controlled-select";
+import { CirclePlus, Trash2, UtensilsCrossed } from "lucide-react";
+import { useFieldArray, useFormContext } from "react-hook-form";
+
+const SpecifyFoodServingUnits = () => {
+  const { control } = useFormContext<FoodSchema>();
+  const foodServingUnits = useFieldArray({ control, name: "foodServingUnits" });
+
+  const servingUnitsQuery = useServingUnits();
+
+  return (
+    <div className="flex flex-col gap-4 rounded-md border p-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium">Serving Units</h3>
+        <Button
+          size="sm"
+          type="button"
+          variant="outline"
+          className="flex items-center gap-1"
+          onClick={() => {
+            foodServingUnits.append({ foodServingUnitId: "", grams: "0" });
+          }}
+        >
+          <CirclePlus className="size-4" /> Add Serving Unit
+        </Button>
+      </div>
+
+      {foodServingUnits.fields.length === 0 ? (
+        <div className="text-muted-foreground flex flex-col items-center justify-center rounded-md border border-dashed py-6 text-center">
+          <UtensilsCrossed className="mb-2 size-10 opacity-50" />
+          <p>No serving units added yet</p>
+          <p className="text-sm">
+            Add serving units to help users measure this food
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {foodServingUnits.fields.map((field, index) => (
+            <div
+              className="grid grid-cols-[1fr_1fr_auto] items-end gap-3"
+              key={field.id}
+            >
+              <div className="col-span-1 flex items-end">
+                <ControlledSelect<FoodSchema>
+                  label="Food Serving Unit"
+                  name={`foodServingUnits.${index}.foodServingUnitId`}
+                  options={servingUnitsQuery.data?.map((item) => ({
+                    label: item.name,
+                    value: item.id,
+                  }))}
+                  placeholder="Select unit..."
+                />
+                <ServingUnitFormDialog smallTrigger />
+              </div>
+
+              <div>
+                <ControlledInput<FoodSchema>
+                  name={`foodServingUnits.${index}.grams`}
+                  label="Grams per Unit"
+                  type="number"
+                  placeholder="0"
+                />
+              </div>
+              <Button
+                size="icon"
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  foodServingUnits.remove(index);
+                }}
+              >
+                <Trash2 />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export { SpecifyFoodServingUnits };
+
+
+```
+
+`npx shadcn@latest add drawer`
+
+```ts lib/use-debounce.ts
+import { useEffect, useState } from "react";
+
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [delay, value]);
+
+  return debouncedValue;
+};
+
+export { useDebounce };
+```
+
+```ts foods/_components/food-filters-drawer.tsx
+"use client";
+import { useCategories } from "@/app/(dashboard)/admin/foods-management/categories/_services/use-queries";
+
+import { useFoodsStore } from "@/app/(dashboard)/admin/foods-management/foods/_libs/use-food-store";
+import {
+  FoodFiltersSchema,
+  foodFiltersDefaultValues,
+  foodFiltersSchema,
+} from "@/app/(dashboard)/admin/foods-management/foods/_types/foodFilterSchema";
+import { Button } from "@/components/ui/button";
+import { ControlledInput } from "@/components/ui/controlled/controlled-input";
+import { ControlledSelect } from "@/components/ui/controlled/controlled-select";
+import { ControlledSlider } from "@/components/ui/controlled/controlled-slider";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { useDebounce } from "@/lib/useDebounce";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FilterIcon } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import {
+  FormProvider,
+  SubmitHandler,
+  useForm,
+  useWatch,
+} from "react-hook-form";
+import equal from "fast-deep-equal";
+
+const FoodFiltersDrawer = () => {
+  const form = useForm<FoodFiltersSchema>({
+    defaultValues: foodFiltersDefaultValues,
+    resolver: zodResolver(foodFiltersSchema),
+  });
+
+  const {
+    updateFoodFilters,
+    foodFiltersDrawerOpen,
+    updateFoodFiltersDrawerOpen,
+    updateFoodFiltersSearchTerm,
+    foodFilters,
+  } = useFoodsStore();
+
+  const areFiltersModified = useMemo(
+    () => !equal(foodFilters, foodFiltersDefaultValues),
+    [foodFilters],
+  );
+
+  const searchTerm = useWatch({ control: form.control, name: "searchTerm" });
+  const debouncedSearchTerm = useDebounce(searchTerm, 400);
+
+  useEffect(() => {
+    updateFoodFiltersSearchTerm(debouncedSearchTerm);
+  }, [debouncedSearchTerm, updateFoodFiltersSearchTerm]);
+
+  const categoriesQuery = useCategories();
+
+  useEffect(() => {
+    if (!foodFiltersDrawerOpen) {
+      form.reset(foodFilters);
+    }
+  }, [foodFilters, foodFiltersDrawerOpen, form]);
+
+  const onSubmit: SubmitHandler<FoodFiltersSchema> = (data) => {
+    updateFoodFilters(data);
+    updateFoodFiltersDrawerOpen(false);
+  };
+
+  return (
+    <Drawer
+      open={foodFiltersDrawerOpen}
+      onOpenChange={updateFoodFiltersDrawerOpen}
+      direction="right"
+      handleOnly
+    >
+      <FormProvider {...form}>
+        <div className="flex gap-2">
+          <ControlledInput<FoodFiltersSchema>
+            containerClassName="max-w-48"
+            name="searchTerm"
+            placeholder="Quick Search"
+          />
+          <DrawerTrigger asChild>
+            <Button variant="outline" badge={areFiltersModified}>
+              <FilterIcon />
+              Filters
+            </Button>
+          </DrawerTrigger>
+        </div>
+        <form>
+          <DrawerContent>
+            <DrawerHeader className="text-left">
+              <DrawerTitle>Filters</DrawerTitle>
+              <DrawerDescription>
+                Customize your food search criteria
+              </DrawerDescription>
+            </DrawerHeader>
+
+            <div className="space-y-2 p-4">
+              <div className="flex flex-wrap gap-2">
+                <ControlledSelect<FoodFiltersSchema>
+                  label="Category"
+                  name="categoryId"
+                  clearable
+                  options={categoriesQuery.data?.map((item) => ({
+                    value: item.id,
+                    label: item.name,
+                  }))}
+                />
+
+                <ControlledSelect<FoodFiltersSchema>
+                  label="Sort By"
+                  name="sortBy"
+                  options={[
+                    { label: "Name", value: "name" },
+                    { label: "Calories", value: "calories" },
+                    { label: "Carbohydrates", value: "carbohydrates" },
+                    { label: "Fat", value: "fat" },
+                    { label: "Protein", value: "protein" },
+                  ]}
+                />
+
+                <ControlledSelect<FoodFiltersSchema>
+                  label="Sort Order"
+                  name="sortOrder"
+                  options={[
+                    { label: "Ascending", value: "asc" },
+                    { label: "Descending", value: "desc" },
+                  ]}
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <ControlledSlider<FoodFiltersSchema>
+                  name="caloriesRange"
+                  label="Calories"
+                  min={0}
+                  max={9999}
+                />
+                <ControlledSlider<FoodFiltersSchema>
+                  name="proteinRange"
+                  label="Protein"
+                  min={0}
+                  max={9999}
+                />
+              </div>
+            </div>
+            <DrawerFooter className="pt-2">
+              <DrawerClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DrawerClose>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  form.reset(foodFiltersDefaultValues);
+                }}
+              >
+                Reset
+              </Button>
+              <Button type="submit" onClick={form.handleSubmit(onSubmit)}>
+                Apply Filters
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </form>
+      </FormProvider>
+    </Drawer>
+  );
+};
+
+export { FoodFiltersDrawer };
+
+
+```
+
+```ts ui/controlled-sliders.tsx
+"use client";
+
+import { cn } from "@/lib/utils";
+import * as SliderPrimitive from "@radix-ui/react-slider";
+import * as React from "react";
+import { Controller, FieldValues, Path, useFormContext } from "react-hook-form";
+
+interface SliderProps<T extends FieldValues>
+  extends React.ComponentProps<typeof SliderPrimitive.Root> {
+  name: Path<T>;
+  label?: string;
+  minStepsBetweenThumbs?: number;
+}
+
+function ControlledSlider<T extends FieldValues>({
+  className,
+  name,
+  label = "Price Range",
+  defaultValue,
+  min = 0,
+  max = 100,
+  minStepsBetweenThumbs = 1,
+  ...props
+}: SliderProps<T>) {
+  const { control } = useFormContext<T>();
+
+  return (
+    <Controller
+      name={name}
+      control={control}
+      render={({ field }) => {
+        const values = Array.isArray(field.value)
+          ? field.value
+          : Array.isArray(defaultValue)
+            ? defaultValue
+            : [min, max];
+
+        const handleValueChange = (newValues: number[]) => {
+          if (minStepsBetweenThumbs > 1 && newValues.length > 1) {
+            for (let i = 0; i < newValues.length - 1; i++) {
+              if (newValues[i + 1] - newValues[i] < minStepsBetweenThumbs) {
+                return;
+              }
+            }
+          }
+          field.onChange(newValues);
+        };
+
+        return (
+          <div className="grid w-full gap-4 rounded-md border border-[#14424C]/20 p-4">
+            <div className="flex items-center justify-between">
+              {label && (
+                <label className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  {label}
+                </label>
+              )}
+            </div>
+
+            <SliderPrimitive.Root
+              data-slot="slider"
+              value={field.value ?? values}
+              min={min}
+              max={max}
+              onValueChange={handleValueChange}
+              className={cn(
+                "relative flex w-full touch-none items-center select-none data-[disabled]:opacity-50 data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-44 data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col",
+                className,
+              )}
+              {...props}
+            >
+              <SliderPrimitive.Track
+                data-slot="slider-track"
+                className={cn(
+                  "bg-muted relative grow cursor-pointer overflow-hidden rounded-full data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5",
+                )}
+              >
+                <SliderPrimitive.Range
+                  data-slot="slider-range"
+                  className={cn(
+                    "bg-primary absolute cursor-pointer data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full",
+                  )}
+                />
+              </SliderPrimitive.Track>
+              {values.map((_, index) => (
+                <SliderPrimitive.Thumb
+                  data-slot="slider-thumb"
+                  key={index}
+                  className="border-primary bg-background ring-ring/50 block size-4 shrink-0 cursor-pointer rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
+                />
+              ))}
+            </SliderPrimitive.Root>
+
+            <div className="flex flex-wrap gap-2">
+              <ol className="flex w-full items-center gap-3">
+                {values.map((singleValue, index) => (
+                  <li
+                    key={index}
+                    className="flex h-10 w-full items-center justify-between rounded-md border px-3"
+                  >
+                    <span>{index === 0 ? "Min" : "Max"}</span>
+                    <span>{singleValue.toLocaleString()}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        );
+      }}
+    />
+  );
+}
+
+export { ControlledSlider };
+
+```
+
+```ts foods/page.tsx
+import { FoodCards } from "@/app/(dashboard)/admin/foods-management/foods/_components/food-cards";
+import { FoodFiltersDrawer } from "@/app/(dashboard)/admin/foods-management/foods/_components/food-filters-drawer";
+import { FoodFormDialog } from "@/app/(dashboard)/admin/foods-management/foods/_components/food-form.dialog";
+
+const Page = () => {
+  return (
+    <div className="space-y-2">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-3xl font-semibold">Foods List</h1>
+        <FoodFormDialog />
+      </div>
+      <FoodFiltersDrawer />
+      <FoodCards />
+    </div>
+  );
+};
+
+export default Page;
+
+
+```
