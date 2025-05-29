@@ -3935,6 +3935,7 @@ export { mealFiltersDefaultValues, mealFiltersSchema, type MealFiltersSchema };
 ```ts meals/_services/mealQueries.ts
 "use server";
 
+import { Prisma } from "$/generated/prisma";
 import {
   mealFiltersSchema,
   MealFiltersSchema,
@@ -3943,7 +3944,6 @@ import { MealSchema } from "@/app/(dashboard)/client/_types/mealSchema";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
 import { toStringSafe } from "@/lib/utils";
-import { Prisma } from "@prisma/client";
 
 const getMeals = async (filters: MealFiltersSchema) => {
   const validatedFilters = mealFiltersSchema.parse(filters);
@@ -4013,4 +4013,996 @@ const getMeal = async (id: number): Promise<MealSchema | null> => {
 };
 
 export { getMeal, getMeals };
+```
+
+```ts meal-mutations.ts
+"use server";
+
+import {
+  mealSchema,
+  MealSchema,
+} from "@/app/(dashboard)/client/_types/mealSchema";
+import db from "@/lib/db";
+import { executeAction } from "@/lib/executeAction";
+import { toNumberSafe } from "@/lib/utils";
+
+const createMeal = async (data: MealSchema) => {
+  await executeAction({
+    actionFn: async () => {
+      const validatedData = mealSchema.parse(data);
+
+      const meal = await db.meal.create({
+        data: {
+          userId: toNumberSafe(validatedData.userId),
+          dateTime: validatedData.dateTime,
+        },
+      });
+
+      await Promise.all(
+        validatedData.mealFoods.map(async (food) => {
+          await db.mealFood.create({
+            data: {
+              mealId: meal.id,
+              foodId: toNumberSafe(food.foodId),
+              amount: toNumberSafe(food.amount),
+              servingUnitId: toNumberSafe(food.servingUnitId),
+            },
+          });
+        }),
+      );
+    },
+  });
+};
+
+const updateMeal = async (data: MealSchema) => {
+  await executeAction({
+    actionFn: async () => {
+      const validatedData = mealSchema.parse(data);
+      if (validatedData.action === "update") {
+        await db.meal.update({
+          where: { id: validatedData.id },
+          data: {
+            dateTime: validatedData.dateTime,
+          },
+        });
+
+        await db.mealFood.deleteMany({
+          where: { mealId: validatedData.id },
+        });
+
+        await Promise.all(
+          validatedData.mealFoods.map(async (food) => {
+            await db.mealFood.create({
+              data: {
+                mealId: validatedData.id,
+                foodId: toNumberSafe(food.foodId),
+                servingUnitId: toNumberSafe(food.servingUnitId),
+                amount: toNumberSafe(food.amount),
+              },
+            });
+          }),
+        );
+      }
+    },
+  });
+};
+
+const deleteMeal = async (id: number) => {
+  await executeAction({
+    actionFn: async () => {
+      await db.mealFood.deleteMany({
+        where: { mealId: id },
+      });
+
+      await db.meal.delete({ where: { id } });
+    },
+  });
+};
+
+export { createMeal, deleteMeal, updateMeal };
+```
+
+```ts use-meal-mutations.ts
+import {
+  createMeal,
+  deleteMeal,
+  updateMeal,
+} from "@/app/(dashboard)/client/_services/mealMutations";
+import { MealSchema } from "@/app/(dashboard)/client/_types/mealSchema";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+const useCreateMeal = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: MealSchema) => {
+      await createMeal(data);
+    },
+    onSuccess: () => {
+      toast.success("Meal created successfully.");
+      queryClient.invalidateQueries({ queryKey: ["meals"] });
+    },
+  });
+};
+
+const useUpdateMeal = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: MealSchema) => {
+      await updateMeal(data);
+    },
+    onSuccess: () => {
+      toast.success("Meal updated successfully.");
+      queryClient.invalidateQueries({ queryKey: ["meals"] });
+    },
+  });
+};
+
+const useDeleteMeal = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await deleteMeal(id);
+    },
+    onSuccess: () => {
+      toast.success("Meal deleted successfully.");
+      queryClient.invalidateQueries({ queryKey: ["meals"] });
+    },
+  });
+};
+
+export { useCreateMeal, useDeleteMeal, useUpdateMeal };
+```
+
+```ts _libs/use-meal-store.ts
+import {
+  mealFiltersDefaultValues,
+  MealFiltersSchema,
+} from "@/app/(dashboard)/client/_types/mealFilterSchema";
+import { createStore } from "@/lib/createStore";
+
+type State = {
+  selectedMealId: number | null;
+  mealDialogOpen: boolean;
+  mealFilters: MealFiltersSchema;
+};
+
+type Actions = {
+  updateSelectedMealId: (id: State["selectedMealId"]) => void;
+  updateMealDialogOpen: (is: State["mealDialogOpen"]) => void;
+  updateMealFilters: (filters: State["mealFilters"]) => void;
+};
+
+type Store = State & Actions;
+
+const useMealsStore = createStore<Store>(
+  (set) => ({
+    selectedMealId: null,
+    updateSelectedMealId: (id) =>
+      set((state) => {
+        state.selectedMealId = id;
+      }),
+    mealDialogOpen: false,
+    updateMealDialogOpen: (is) =>
+      set((state) => {
+        state.mealDialogOpen = is;
+      }),
+    mealFilters: mealFiltersDefaultValues,
+    updateMealFilters: (filters) =>
+      set((state) => {
+        state.mealFilters = filters;
+      }),
+  }),
+  {
+    name: "meals-store",
+  },
+);
+
+export { useMealsStore };
+```
+
+```ts use-meal-queries.ts
+import { useMealsStore } from "@/app/(dashboard)/client/_libs/use-meal-store";
+import {
+  getMeal,
+  getMeals,
+} from "@/app/(dashboard)/client/_services/mealQueries";
+import { useQuery } from "@tanstack/react-query";
+
+const useMeals = () => {
+  const { mealFilters } = useMealsStore();
+
+  return useQuery({
+    queryKey: ["meals", mealFilters],
+    queryFn: () => getMeals(mealFilters),
+  });
+};
+
+const useMeal = () => {
+  const { selectedMealId } = useMealsStore();
+
+  return useQuery({
+    queryKey: ["meals", { selectedMealId }],
+    queryFn: () => getMeal(selectedMealId!),
+    enabled: !!selectedMealId,
+  });
+};
+
+export { useMeals, useMeal };
+```
+
+```tsx meal-form-dialog.tsx
+"use client";
+
+import { SpecifyMealFoods } from "@/app/(dashboard)/client/_components/specify-meal-foods";
+import { useMealsStore } from "@/app/(dashboard)/client/_libs/use-meal-store";
+import {
+  useCreateMeal,
+  useUpdateMeal,
+} from "@/app/(dashboard)/client/_services/use-meal-mutations";
+import { useMeal } from "@/app/(dashboard)/client/_services/use-meal-queries";
+import {
+  mealDefaultValues,
+  mealSchema,
+  MealSchema,
+} from "@/app/(dashboard)/client/_types/mealSchema";
+import { Button } from "@/components/ui/button";
+import { ControlledDatePicker } from "@/components/ui/controlled-date-picker";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus } from "lucide-react";
+import { Session } from "next-auth";
+import { useEffect } from "react";
+import {
+  FormProvider,
+  SubmitHandler,
+  useForm,
+  useWatch,
+} from "react-hook-form";
+
+type MealFormDialogProps = {
+  smallTrigger?: boolean;
+  session: Session;
+};
+const MealFormDialog = ({ smallTrigger, session }: MealFormDialogProps) => {
+  const form = useForm<MealSchema>({
+    defaultValues: mealDefaultValues,
+    resolver: zodResolver(mealSchema),
+  });
+
+  const userId = useWatch({ control: form.control, name: "userId" });
+
+  const {
+    selectedMealId,
+    updateSelectedMealId,
+    mealDialogOpen,
+    updateMealDialogOpen,
+  } = useMealsStore();
+
+  const mealQuery = useMeal();
+  const createMealMutation = useCreateMeal();
+  const updateMealMutation = useUpdateMeal();
+
+  useEffect(() => {
+    if (!!selectedMealId && mealQuery.data) {
+      form.reset(mealQuery.data);
+    }
+  }, [mealQuery.data, form, selectedMealId]);
+
+  useEffect(() => {
+    if (!userId && session?.user?.id) {
+      form.setValue("userId", session.user.id);
+    }
+  }, [form, session?.user?.id, userId]);
+
+  const handleDialogOpenChange = (open: boolean) => {
+    updateMealDialogOpen(open);
+
+    if (!open) {
+      updateSelectedMealId(null);
+      form.reset(mealDefaultValues);
+    }
+  };
+
+  const handleSuccess = () => {
+    handleDialogOpenChange(false);
+  };
+
+  const onSubmit: SubmitHandler<MealSchema> = (data) => {
+    if (data.action === "create") {
+      createMealMutation.mutate(data, {
+        onSuccess: handleSuccess,
+      });
+    } else {
+      updateMealMutation.mutate(data, { onSuccess: handleSuccess });
+    }
+  };
+
+  const isPending =
+    createMealMutation.isPending || updateMealMutation.isPending;
+
+  return (
+    <Dialog open={mealDialogOpen} onOpenChange={handleDialogOpenChange}>
+      <DialogTrigger asChild>
+        {smallTrigger ? (
+          <Button size="icon" variant="ghost" type="button">
+            <Plus />
+          </Button>
+        ) : (
+          <Button>
+            <Plus className="mr-2" />
+            New Meal
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-2xl">
+            {selectedMealId ? "Edit Meal" : "Create a New Meal"}
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormProvider {...form}>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <SpecifyMealFoods />
+              </div>
+              <div className="col-span-2">
+                <ControlledDatePicker<MealSchema> name="dateTime" />
+              </div>
+            </div>
+          </FormProvider>
+          <DialogFooter>
+            <Button type="submit" isLoading={isPending}>
+              {!!selectedMealId ? "Edit" : "Create"} Meal
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+export { MealFormDialog };
+```
+
+```tsx specify-meal-foods.tsx
+import { useFoods } from "@/app/(dashboard)/admin/foods-management/foods/_services/use-food-queries";
+import { useServingUnits } from "@/app/(dashboard)/admin/foods-management/serving-units/_services/use-serving-unit-queries";
+import { MealSchema } from "@/app/(dashboard)/client/_types/mealSchema";
+import { Button } from "@/components/ui/button";
+import { ControlledInput } from "@/components/ui/controlled-input";
+import { ControlledSelect } from "@/components/ui/controlled-select";
+import { CirclePlus, Trash2, UtensilsCrossed } from "lucide-react";
+import { useFieldArray, useFormContext } from "react-hook-form";
+
+const SpecifyMealFoods = () => {
+  const { control } = useFormContext<MealSchema>();
+  const mealFoods = useFieldArray({ control, name: "mealFoods" });
+
+  const foodsQuery = useFoods();
+  const servingUnitsQuery = useServingUnits();
+
+  return (
+    <div className="flex flex-col gap-4 rounded-md border p-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium">Foods</h3>
+        <Button
+          size="sm"
+          type="button"
+          variant="outline"
+          className="flex items-center gap-1"
+          onClick={() => {
+            mealFoods.append({ foodId: "", servingUnitId: "", amount: "0" });
+          }}
+        >
+          <CirclePlus className="size-4" /> Add Food
+        </Button>
+      </div>
+
+      {mealFoods.fields.length === 0 ? (
+        <div className="text-muted-foreground flex flex-col items-center justify-center rounded-md border border-dashed py-6 text-center">
+          <UtensilsCrossed className="mb-2 size-10 opacity-50" />
+          <p>No foods added to this meal yet</p>
+          <p className="text-sm">
+            Add foods to track what you&apos;re eating in this meal
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {mealFoods.fields.map((field, index) => (
+            <div
+              className="grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-3"
+              key={field.id}
+            >
+              <div>
+                <ControlledSelect<MealSchema>
+                  label="Food"
+                  name={`mealFoods.${index}.foodId`}
+                  options={foodsQuery.data?.data.map((item) => ({
+                    label: item.name,
+                    value: item.id,
+                  }))}
+                  placeholder="Select food..."
+                />
+              </div>
+
+              <div>
+                <ControlledSelect<MealSchema>
+                  label="Serving Unit"
+                  name={`mealFoods.${index}.servingUnitId`}
+                  options={servingUnitsQuery.data?.map((item) => ({
+                    label: item.name,
+                    value: item.id,
+                  }))}
+                  placeholder="Select unit..."
+                />
+              </div>
+
+              <div>
+                <ControlledInput<MealSchema>
+                  name={`mealFoods.${index}.amount`}
+                  label="Amount"
+                  type="number"
+                  placeholder="0"
+                />
+              </div>
+
+              <Button
+                size="icon"
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  mealFoods.remove(index);
+                }}
+              >
+                <Trash2 />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export { SpecifyMealFoods };
+```
+
+`npm i date-fns@^3.6.0 --legacy-peer-deps`
+`npx shadcn@latest add calendar popover`
+
+```tsx ui/controlled-date-picker.tsx
+"use client";
+
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Controller, FieldValues, Path, useFormContext } from "react-hook-form";
+import { Label } from "@/components/ui/label";
+
+type ControlledDatePickerProps<T extends FieldValues> = {
+  name: Path<T>;
+  label?: string;
+};
+
+const ControlledDatePicker = <T extends FieldValues>({
+  name,
+  label,
+}: ControlledDatePickerProps<T>) => {
+  const { control } = useFormContext<T>();
+
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({
+        field: { value, onChange, ...restField },
+        fieldState: { error },
+      }) => (
+        <Popover modal>
+          {!!label && (
+            <Label className="mb-2" htmlFor={name}>
+              {label}
+            </Label>
+          )}
+          <div className="flex flex-col gap-2">
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn(
+                  "w-[280px] justify-start text-left font-normal",
+                  !value && "text-muted-foreground",
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {value ? format(value, "PPP") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            {!!error && (
+              <p className="text-destructive text-sm">{error.message}</p>
+            )}
+          </div>
+          <PopoverContent className="w-auto p-0">
+            <Calendar
+              mode="single"
+              selected={value}
+              onSelect={onChange}
+              initialFocus
+              {...restField}
+            />
+          </PopoverContent>
+        </Popover>
+      )}
+    />
+  );
+};
+
+export { ControlledDatePicker };
+```
+
+`npx shadcn@latest add badge card`
+
+```tsx meal-cards.tsx
+"use client";
+import { MealCardsSkeleton } from "@/app/(dashboard)/client/_components/meal-cards-skeleton";
+import { useMealsStore } from "@/app/(dashboard)/client/_libs/use-meal-store";
+import { useDeleteMeal } from "@/app/(dashboard)/client/_services/use-meal-mutations";
+import { useMeals } from "@/app/(dashboard)/client/_services/use-meal-queries";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { alert } from "@/lib/use-global-store";
+import { format } from "date-fns";
+import {
+  CalendarX,
+  Edit,
+  Flame,
+  LineChart,
+  PieChart,
+  Trash,
+  Utensils,
+} from "lucide-react";
+
+const MealCards = () => {
+  const { updateSelectedMealId, updateMealDialogOpen, mealFilters } =
+    useMealsStore();
+
+  const mealsQuery = useMeals();
+
+  const deleteMealMutation = useDeleteMeal();
+
+  const nutritionTotals = mealsQuery.data?.reduce(
+    (totals, meal) => {
+      meal.mealFoods.forEach((mealFood) => {
+        const multiplier = mealFood.amount || 1;
+        totals.calories += (mealFood.food.calories || 0) * multiplier;
+        totals.protein += (mealFood.food.protein || 0) * multiplier;
+        totals.carbs += (mealFood.food.carbohydrates || 0) * multiplier;
+        totals.fat += (mealFood.food.fat || 0) * multiplier;
+        totals.sugar += (mealFood.food.sugar || 0) * multiplier;
+        totals.fiber += (mealFood.food.fiber || 0) * multiplier;
+      });
+      return totals;
+    },
+    { calories: 0, protein: 0, carbs: 0, fat: 0, sugar: 0, fiber: 0 },
+  ) || { calories: 0, protein: 0, carbs: 0, fat: 0, sugar: 0, fiber: 0 };
+
+  const displayDate = mealFilters.dateTime
+    ? format(new Date(mealFilters.dateTime), "EEEE, MMMM d, yyyy")
+    : "Today";
+
+  if (mealsQuery.isLoading) {
+    return <MealCardsSkeleton />;
+  }
+
+  if (mealsQuery.data?.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <CalendarX className="text-primary mb-2" />
+        <h3 className="text-lg font-medium">No meals found</h3>
+        <p className="text-foreground/60 mt-1 text-sm">
+          Try adjusting your filters or add new meals
+        </p>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => {
+            updateMealDialogOpen(true);
+          }}
+        >
+          Add new meal
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h2 className="mb-4 text-2xl font-bold">{displayDate}</h2>
+
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Total Calories Card */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-sm font-medium">
+                <Flame className="text-primary mr-2 h-4 w-4" />
+                Total Calories
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {nutritionTotals.calories} kcal
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Macronutrients Card */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-sm font-medium">
+                <PieChart className="text-primary mr-2 h-4 w-4" />
+                Macronutrients
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <p className="text-muted-foreground text-xs">Protein</p>
+                  <p className="font-medium">{nutritionTotals.protein}g</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Carbs</p>
+                  <p className="font-medium">{nutritionTotals.carbs}g</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Fat</p>
+                  <p className="font-medium">{nutritionTotals.fat}g</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Meal Summary Card */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-sm font-medium">
+                <Utensils className="text-primary mr-2 h-4 w-4" />
+                Meal Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-sm">Total Meals</span>
+                  <span className="font-medium">
+                    {mealsQuery.data?.length || 0}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Total Food Items</span>
+                  <span className="font-medium">
+                    {mealsQuery.data?.reduce(
+                      (total, meal) => total + meal.mealFoods.length,
+                      0,
+                    ) || 0}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Last Meal</span>
+                  <span className="font-medium">
+                    {mealsQuery.data?.length
+                      ? format(new Date(mealsQuery.data[0].dateTime), "h:mm a")
+                      : "N/A"}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Additional Nutrients Card */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-sm font-medium">
+                <LineChart className="text-primary mr-2 h-4 w-4" />
+                Additional Nutrients
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                <div>
+                  <p className="text-muted-foreground text-xs">Fiber</p>
+                  <p className="font-medium">{nutritionTotals.fiber}g</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Sugar</p>
+                  <p className="font-medium">{nutritionTotals.sugar}g</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Meal Cards Section */}
+      <div>
+        <h3 className="mb-4 text-lg font-medium">Meals</h3>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {mealsQuery.data?.map((meal) => {
+            const totalCalories = meal.mealFoods.reduce((total, mealFood) => {
+              const foodCalories =
+                (mealFood?.food?.calories ?? 0) * mealFood.amount || 0;
+              return total + foodCalories;
+            }, 0);
+
+            return (
+              <div
+                className="border-border/40 hover:border-border/80 flex flex-col gap-3 rounded-lg border p-6 transition-colors"
+                key={meal.id}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-medium">
+                      {format(new Date(meal.dateTime), "PPp")}
+                    </p>
+                    <Badge variant="outline" className="mt-1">
+                      {totalCalories} kcal
+                    </Badge>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      className="size-8"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        updateSelectedMealId(meal.id);
+                        updateMealDialogOpen(true);
+                      }}
+                    >
+                      <Edit className="size-4" />
+                    </Button>
+                    <Button
+                      className="size-8"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        alert({
+                          title: "Delete Meal",
+                          description:
+                            "Are you sure you want to delete this meal?",
+                          onConfirm: () => deleteMealMutation.mutate(meal.id),
+                        });
+                      }}
+                    >
+                      <Trash className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Utensils className="text-primary size-4" />
+                    <p className="text-foreground/70 text-sm font-medium">
+                      {meal.mealFoods.length}{" "}
+                      {meal.mealFoods.length === 1 ? "item" : "items"}
+                    </p>
+                  </div>
+
+                  {meal.mealFoods.length === 0 ? (
+                    <p className="text-foreground/60 text-sm italic">
+                      No foods added
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {meal.mealFoods.map((mealFood) => (
+                        <div
+                          key={mealFood.id}
+                          className="bg-muted/40 rounded-md p-3"
+                        >
+                          <div className="flex items-start justify-between">
+                            <p className="font-medium">{mealFood.food.name}</p>
+                            <Badge variant="secondary">
+                              {(mealFood.food.calories ?? 0) *
+                                (mealFood.amount || 1)}{" "}
+                              kcal
+                            </Badge>
+                          </div>
+
+                          <div className="text-foreground/70 mt-2 flex justify-between text-sm">
+                            <div>
+                              <span>Serving: </span>
+                              <span className="font-medium">
+                                {mealFood.amount > 0
+                                  ? mealFood.amount
+                                  : "Not specified"}{" "}
+                                {mealFood.servingUnit?.name || "units"}
+                              </span>
+                            </div>
+
+                            <div className="space-x-1 text-xs">
+                              <span>P: {mealFood.food.protein}g</span>
+                              <span>C: {mealFood.food.carbohydrates}g</span>
+                              <span>F: {mealFood.food.fat}g</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export { MealCards };
+```
+
+```tsx meal-cards-skeleton.tsx
+"use client";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const MealCardsSkeleton = () => {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {Array.from({ length: 8 }).map((_, index) => (
+        <div
+          className="border-border/40 flex flex-col gap-3 rounded-lg border p-6"
+          key={index}
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <Skeleton className="mb-1 h-5 w-32" />
+              <Skeleton className="mt-1 h-5 w-20" />
+            </div>
+            <div className="flex gap-1">
+              <Skeleton className="size-8 rounded-md" />
+              <Skeleton className="size-8 rounded-md" />
+            </div>
+          </div>
+
+          <Skeleton className="h-px w-full" />
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Skeleton className="size-4" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+
+            <div className="space-y-3">
+              {Array.from({ length: 2 }).map((_, foodIndex) => (
+                <div key={foodIndex} className="bg-muted/40 rounded-md p-3">
+                  <div className="flex items-start justify-between">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+
+                  <div className="mt-2 flex justify-between">
+                    <Skeleton className="h-3 w-28" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export { MealCardsSkeleton };
+```
+
+```tsx meal-filters.tsx
+"use client";
+import { useMealsStore } from "@/app/(dashboard)/client/_libs/use-meal-store";
+import {
+  mealFiltersDefaultValues,
+  mealFiltersSchema,
+  MealFiltersSchema,
+} from "@/app/(dashboard)/client/_types/mealFilterSchema";
+import { Button } from "@/components/ui/button";
+import { ControlledDatePicker } from "@/components/ui/controlled-date-picker";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+
+const MealFilters = () => {
+  const form = useForm<MealFiltersSchema>({
+    defaultValues: mealFiltersDefaultValues,
+    resolver: zodResolver(mealFiltersSchema),
+  });
+
+  const { updateMealFilters } = useMealsStore();
+
+  const onSubmit: SubmitHandler<MealFiltersSchema> = (data) => {
+    updateMealFilters(data);
+  };
+
+  return (
+    <FormProvider {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="mb-4 flex items-center gap-3"
+      >
+        <ControlledDatePicker<MealFiltersSchema>
+          name="dateTime"
+          label="Filter by date"
+        />
+        <Button type="submit" size="sm">
+          Apply
+        </Button>
+      </form>
+    </FormProvider>
+  );
+};
+
+export { MealFilters };
+```
+
+```tsx client/layout.tsx
+import { Role } from "$/generated/prisma";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { ReactNode } from "react";
+
+type LayoutProps = { children: ReactNode };
+const Layout = async ({ children }: LayoutProps) => {
+  const session = await auth();
+  if (!session) redirect("/sign-in");
+  if (session.user?.role === Role.ADMIN)
+    redirect("/admin/foods-management/foods");
+  return <div className="mx-auto max-w-7xl p-6">{children}</div>;
+};
+
+export default Layout;
+```
+
+```tsx client/page.tsx
+import { MealCards } from "@/app/(dashboard)/client/_components/meal-cards";
+import { MealFilters } from "@/app/(dashboard)/client/_components/meal-filters";
+import { MealFormDialog } from "@/app/(dashboard)/client/_components/meal-form-dialog";
+import { auth } from "@/lib/auth";
+
+const Page = async () => {
+  const session = await auth();
+  if (!session) return null;
+
+  return (
+    <>
+      <div className="flex justify-between">
+        <MealFilters />
+        <MealFormDialog session={session} />
+      </div>
+      <MealCards />
+    </>
+  );
+};
+
+export default Page;
 ```
