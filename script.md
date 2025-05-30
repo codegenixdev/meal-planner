@@ -1,3 +1,5 @@
+todo: docker
+
 `npx create-next-app@latest .`
 
 remove not required files and folder (all things in public, styles and remove code from layout and page)
